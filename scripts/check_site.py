@@ -72,9 +72,12 @@ def check():
         if page.parent.parent.name == 'books' and page.parent.name != 'books':
             b = next(b for b in books if b['id'] == page.parent.name)
             assert config['book'] == {'id': b['id'], 'title': b.get('shortTitle') or b['title'], 'category': b['category'], 'asin': b['asin']}, b['id']
-            assert parsed.amazon == ([f'https://www.amazon.co.uk/dp/{b["asin"]}'] if b['status'] == 'live' else []), b['id']
-            assert len(parsed.amazon_buttons) == (1 if b['status'] == 'live' else 0), b['id']
-            if b['status'] == 'live':
+            can_buy = b['status'] == 'live' and b.get('amazonLinkEnabled', True)
+            assert parsed.amazon == ([f'https://www.amazon.co.uk/dp/{b["asin"]}'] if can_buy else []), b['id']
+            assert len(parsed.amazon_buttons) == int(can_buy), b['id']
+            if b['status'] == 'live' and not can_buy:
+                assert 'Amazon UK purchase link temporarily unavailable.' in markup, b['id']
+            if can_buy:
                 button = parsed.amazon_buttons[0]
                 assert (button.get('data-book-id'), button.get('data-asin')) == (b['id'], b['asin']), b['id']
                 assert button.get('href') == parsed.amazon[0] and button.get('target') == '_blank', b['id']
@@ -90,7 +93,8 @@ def check():
     listed = {item.text for item in sitemap.iter() if item.tag.endswith('loc')}
     assert listed == {PRODUCTION_URL + '/' + p.relative_to(ROOT).as_posix().removesuffix('index.html') for p in all_pages}
     assert f'Sitemap: {PRODUCTION_URL}/sitemap.xml' in (ROOT/'robots.txt').read_text()
-    print(f'PASS: {len(all_pages)} pages, {len(books)} listings, {live} ASIN destinations, {sum(len(b["previewPages"]) for b in books)} preview images, reduced assets only')
+    linked = sum(b['status'] == 'live' and b.get('amazonLinkEnabled', True) for b in books)
+    print(f'PASS: {len(all_pages)} pages, {len(books)} listings, {live} verified ASINs, {linked} purchase links, {sum(len(b["previewPages"]) for b in books)} preview images, reduced assets only')
 
 
 if __name__ == '__main__': check()
