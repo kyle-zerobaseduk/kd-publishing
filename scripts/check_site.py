@@ -38,8 +38,9 @@ class Inspect(HTMLParser):
         if tag == 'img': self.images.append(a)
         if tag == 'a' and 'href' in a:
             self.links.append(a['href'])
-            if 'amazon.co.uk/dp/' in a['href']: self.amazon.append(a['href'])
-            if 'amazon-link' in a.get('class', '').split(): self.amazon_buttons.append(a)
+            if 'amazon-link' in a.get('class', '').split():
+                self.amazon.append(a['href'])
+                self.amazon_buttons.append(a)
         if tag == 'button' and 'data-preview' in a:
             self.images.append({'src': a['data-preview'], 'alt': 'Preview button'})
 
@@ -48,7 +49,10 @@ def check():
     assert len({b['id'] for b in books}) == len(books)
     live = sum(b['status'] == 'live' for b in books)
     assert len({b['asin'] for b in books if b['asin']}) == live
-    assert next(b for b in books if b['id'] == 'season-planner')['asin'] == 'B0HJ6HGVC4'
+    planner = next(b for b in books if b['id'] == 'season-planner')
+    assert planner['asin'] == 'B0HJ6HGVC4'
+    assert planner['amazonUrl'] == 'https://amzn.eu/d/09mIs6KH'
+    assert all(urlsplit(b['amazonUrl']).scheme == 'https' and urlsplit(b['amazonUrl']).hostname in ('www.amazon.co.uk', 'amzn.eu') for b in books if b.get('amazonUrl'))
     all_pages = list(ROOT.rglob('index.html'))
     category_count = len({b['category'] for b in books})
     assert len(all_pages) == len(books) + category_count + 6, len(all_pages)
@@ -74,7 +78,8 @@ def check():
             b = next(b for b in books if b['id'] == page.parent.name)
             assert config['book'] == {'id': b['id'], 'title': b.get('shortTitle') or b['title'], 'category': b['category'], 'asin': b['asin']}, b['id']
             can_buy = b['status'] == 'live' and b.get('amazonLinkEnabled', True)
-            assert parsed.amazon == ([f'https://www.amazon.co.uk/dp/{b["asin"]}'] if can_buy else []), b['id']
+            destination = b.get('amazonUrl') or f'https://www.amazon.co.uk/dp/{b["asin"]}'
+            assert parsed.amazon == ([destination] if can_buy else []), b['id']
             assert len(parsed.amazon_buttons) == int(can_buy), b['id']
             if b['status'] == 'live' and not can_buy:
                 assert 'Amazon UK purchase link temporarily unavailable.' in markup, b['id']

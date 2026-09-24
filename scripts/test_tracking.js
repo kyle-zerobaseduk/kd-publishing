@@ -16,9 +16,10 @@ function element() {
     querySelectorAll() { return []; },
   };
 }
-function run({ choice, id = 'G-TEST123', failEvent = false, query = '?utm_source=pinterest&utm_campaign=launch', referrer = 'https://example.org/', initialCampaign } = {}) {
+function run({ choice, id = 'G-TEST123', failEvent = false, query = '?utm_source=pinterest&utm_campaign=launch', referrer = 'https://example.org/', initialCampaign, book = { id: 'first-time-football-coach', title: 'Football Coach', category: 'guides', asin: 'B0HJDH6831' }, linkHref = 'https://www.amazon.co.uk/dp/B0HJDH6831' } = {}) {
   const menu = element(), nav = element(), submenu = element(), banner = element(), amazon = element(), reset = element(), dialog = element(), preview = element();
   const reject = element(), accept = element();
+  amazon.href = linkHref;
   reject.dataset.consent = 'reject'; accept.dataset.consent = 'accept';
   preview.dataset.preview = '../../assets/previews/first-time-football-coach-16.webp';
   preview.dataset.page = '16';
@@ -37,7 +38,7 @@ function run({ choice, id = 'G-TEST123', failEvent = false, query = '?utm_source
     get cookie() { return [...cookies].map(([k, v]) => `${k}=${v}`).join('; '); },
     set cookie(value) { const name = value.split('=')[0]; if (value.includes('Max-Age=0')) cookies.delete(name); },
     createElement() { return {}; },
-    getElementById(key) { return key === 'site-config' ? { textContent: JSON.stringify({ ga4: id, book: { id: 'first-time-football-coach', title: 'Football Coach', category: 'guides', asin: 'B0HJDH6831' } }) } : key === 'cookie-notice' ? banner : key === 'reset-consent' ? reset : key === 'primary-nav' ? nav : null; },
+    getElementById(key) { return key === 'site-config' ? { textContent: JSON.stringify({ ga4: id, book }) } : key === 'cookie-notice' ? banner : key === 'reset-consent' ? reset : key === 'primary-nav' ? nav : null; },
     querySelector(key) { return ({ '.menu-toggle': menu, '#primary-nav': element(), '.submenu-toggle': submenu, '.preview-dialog': dialog })[key] || null; },
     querySelectorAll(key) { return key === '.amazon-link' ? [amazon] : key === '[data-preview]' ? [preview] : []; },
   };
@@ -113,6 +114,15 @@ assert.equal(state.events.find(args => args[1] === 'page_view')[2].page_referrer
 state = run({ choice: 'yes', failEvent: true });
 assert.equal(state.scripts.length, 1);
 assert.doesNotThrow(() => state.amazon.handlers.click());
+
+state = run({ choice: 'yes', book: { id: 'season-planner', title: 'U7 & U8 Season Planner', category: 'guides', asin: 'B0HJ6HGVC4' }, linkHref: 'https://amzn.eu/d/09mIs6KH' });
+state.amazon.handlers.click();
+const plannerClick = state.events.find(args => args[1] === 'amazon_click')[2];
+assert.equal(plannerClick.book_id, 'season-planner');
+assert.equal(plannerClick.book_title, 'U7 & U8 Season Planner');
+assert.equal(plannerClick.category, 'guides');
+assert.equal(plannerClick.asin, 'B0HJ6HGVC4');
+assert.equal(plannerClick.destination_url, 'https://amzn.eu/d/09mIs6KH');
 
 state = run({ id: '' });
 assert.equal(state.scripts.length, 0);
