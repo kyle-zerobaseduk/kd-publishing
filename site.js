@@ -66,6 +66,7 @@
     }));
   }
   document.getElementById('reset-consent')?.addEventListener('click', () => {
+    active = false;
     try { localStorage.removeItem('kd_analytics_consent'); sessionStorage.removeItem('kd_campaign'); } catch {}
     // Remove analytics cookies set on this site when a visitor changes their choice.
     try {

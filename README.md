@@ -13,9 +13,9 @@ Static files require no paid hosting or runtime service. The verified production
 
 ## Analytics
 
-**Current status: unconfigured.** All committed pages have an empty GA4 Measurement ID, so no visitors or events are collected. Create a GA4 property called K.D.Publishing Website and one Web data stream for `https://kyle-zerobaseduk.github.io/kd-publishing/`. Turn Enhanced measurement **off**: this site sends its own page views, preview and Amazon events, so the automatic page-view and outbound-click options are unnecessary. Do not paste a second Google tag or add Google Tag Manager. Copy the stream's `G-...` Measurement ID, then rebuild with `KD_GA4_ID=G-XXXXXXXXXX python scripts/build.py` and commit the generated pages before deployment. Check a consented test visit in GA4 Realtime before treating it as active. Preview testing with the same ID can mix preview traffic into production reports; keep it out of the final reporting period or use a separate test stream if needed.
+**Configured stream: `G-64LMW6KFB7`.** The builder embeds this genuine GA4 Web Stream Measurement ID into each page by default. `KD_GA4_ID` remains an optional build-time override. This does not load Google Analytics until the visitor opts in. The Google-side Enhanced measurement setting should be **off**: this site sends its own page views, preview and Amazon events, so automatic page-view and outbound-click events are unnecessary. Do not paste a second Google tag or add Google Tag Manager. Check a consented test visit in GA4 Realtime before treating data collection as verified. Preview testing with the same ID can mix preview traffic into production reports; identify those test visits by their preview hostname or exclude them in reporting.
 
-Once configured, the site shows an opt-in choice and **does not load Google Analytics or store campaign parameters before consent**. The browser stores the choice; the privacy page lets visitors reopen it and clears this site's GA cookies when the choice is reset. When no ID is supplied, no GA requests or analytics cookies are created. People who decline are not measured.
+The site shows an opt-in choice and **does not load Google Analytics or store campaign parameters before consent**. The browser stores the choice; the privacy page lets visitors reopen it and clears this site's GA cookies when the choice is reset. Setting `KD_GA4_ID=''` for a test build disables GA requests entirely. People who decline are not measured.
 
 Events (only after consent):
 
@@ -34,7 +34,7 @@ The event's `book_title` uses the concise `shortTitle` from the same catalogue r
 
 ## Release checks still required
 
-- Supply the GA4 Measurement ID for the final build. Analytics is currently **inactive**, and the site must be rebuilt with the ID for collection to work. The production URL has been verified and is configured already.
+- Confirm a consented event in the intended GA4 property and verify that Google-side Enhanced measurement will not duplicate page views or outbound clicks. The production URL and genuine Measurement ID are configured in this branch; main is not deployed from the rebuild yet.
 - Confirm a public contact address or contact form endpoint. The contact page currently says details are pending.
 - Independently open all 22 Amazon UK pages in a normal supported browser and compare the titles and ASINs. Amazon rejected automated sessions during this rebuild; the links are built from Bookshelf ASINs but product page reachability was not confirmed.
 - Check the four journal cover placeholders (Calm, Self-Care, Gratitude and Mindfulness) against the live KDP versions before replacing them. No final approved files were identified for these covers.

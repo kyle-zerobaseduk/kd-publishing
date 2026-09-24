@@ -83,6 +83,9 @@ state.preview.handlers.click();
 assert.equal(state.events.find(args => args[1] === 'preview_open')[2].page_number, 16);
 assert.equal(state.dialog.open, true);
 state.reset.handlers.click();
+const eventCountAfterWithdrawal = state.events.length;
+state.amazon.handlers.click();
+assert.equal(state.events.length, eventCountAfterWithdrawal);
 assert.equal(state.stored.has('kd_analytics_consent'), false);
 assert.equal(state.session.has('kd_campaign'), false);
 assert.equal(state.cookies.has('_ga'), false);
@@ -94,6 +97,12 @@ state = run({}); state.reject.handlers.click(); state.amazon.handlers.click(); s
 assert.equal(state.scripts.length, 0); assert.equal(state.events.length, 0);
 assert.equal(state.session.size, 0);
 assert.equal(state.amazon.href, 'https://www.amazon.co.uk/dp/B0HJDH6831');
+
+state = run({ choice: 'no' });
+assert.equal(state.banner.hidden, true);
+assert.equal(state.scripts.length, 0);
+state.amazon.handlers.click();
+assert.equal(state.events.length, 0);
 
 state = run({ choice: 'yes', query: '', referrer: '', initialCampaign: { utm_source: 'instagram', utm_medium: 'social' } });
 assert.equal(state.scripts.length, 1);
