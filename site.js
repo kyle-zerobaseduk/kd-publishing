@@ -50,7 +50,7 @@
     script.async = true;
     script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(config.ga4);
     document.head.appendChild(script);
-    event('page_view', { page_title: document.title, page_location: location.href });
+    event('page_view', { page_title: document.title, page_location: location.href, page_referrer: document.referrer });
     if (config.book) event('book_page_view', { book_id: config.book.id, book_title: config.book.title, category: config.book.category, asin: config.book.asin || '' });
   }
   if (validId) {
@@ -67,6 +67,15 @@
   }
   document.getElementById('reset-consent')?.addEventListener('click', () => {
     try { localStorage.removeItem('kd_analytics_consent'); sessionStorage.removeItem('kd_campaign'); } catch {}
+    // Remove analytics cookies set on this site when a visitor changes their choice.
+    try {
+      document.cookie.split(';').forEach(part => {
+        const name = part.trim().split('=')[0];
+        if (/^_ga(?:_|$)|^_gid$|^_gat(?:_|$)/.test(name)) {
+          document.cookie = name + '=; Max-Age=0; path=/; SameSite=Lax';
+        }
+      });
+    } catch {}
     location.reload();
   });
 
@@ -76,7 +85,7 @@
       book_title: config.book.title,
       category: config.book.category,
       asin: config.book.asin,
-      destination: link.href
+      destination_url: link.href
     });
   }));
   const dialog = document.querySelector('.preview-dialog');

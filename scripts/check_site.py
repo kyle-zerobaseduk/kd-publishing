@@ -35,11 +35,12 @@ class Inspect(HTMLParser):
 
 
 def check():
-    assert len(books) == 23 and len({b['id'] for b in books}) == 23
-    assert sum(b['status'] == 'live' for b in books) == 22
-    assert len({b['asin'] for b in books if b['asin']}) == 22
+    assert len({b['id'] for b in books}) == len(books)
+    live = sum(b['status'] == 'live' for b in books)
+    assert len({b['asin'] for b in books if b['asin']}) == live
     all_pages = list(ROOT.rglob('index.html'))
-    assert len(all_pages) == 33, len(all_pages)
+    category_count = len({b['category'] for b in books})
+    assert len(all_pages) == len(books) + category_count + 6, len(all_pages)
     for page in all_pages:
         parsed = Inspect(); parsed.feed(page.read_text())
         assert (parsed.h1,parsed.title,parsed.description) == (1,1,1), page
@@ -61,7 +62,7 @@ def check():
         with Image.open(asset) as image:
             assert max(image.size) <= 1300 and image.width <= 850, asset
     assert len(list((ROOT/'assets/previews').glob('*.webp'))) == sum(len(b['previewPages']) for b in books)
-    print(f'PASS: {len(all_pages)} pages, {len(books)} listings, 22 ASIN destinations, {sum(len(b["previewPages"]) for b in books)} preview images, reduced assets only')
+    print(f'PASS: {len(all_pages)} pages, {len(books)} listings, {live} ASIN destinations, {sum(len(b["previewPages"]) for b in books)} preview images, reduced assets only')
 
 
 if __name__ == '__main__': check()

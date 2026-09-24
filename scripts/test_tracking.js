@@ -16,28 +16,39 @@ function element() {
     querySelectorAll() { return []; },
   };
 }
-function run({ choice, id = 'G-TEST123', failEvent = false }) {
-  const menu = element(), submenu = element(), banner = element(), amazon = element();
+function run({ choice, id = 'G-TEST123', failEvent = false } = {}) {
+  const menu = element(), submenu = element(), banner = element(), amazon = element(), reset = element(), dialog = element(), preview = element();
   const reject = element(), accept = element();
   reject.dataset.consent = 'reject'; accept.dataset.consent = 'accept';
+  preview.dataset.preview = '../../assets/previews/first-time-football-coach-16.webp';
+  preview.dataset.page = '16';
+  preview.querySelector = () => ({ alt: 'Actual interior page 16' });
+  const dialogImage = { src: '', alt: '' }, dialogText = { textContent: '' };
+  dialog.querySelector = selector => selector === 'img' ? dialogImage : selector === 'p' ? dialogText : element();
+  dialog.showModal = () => { dialog.open = true; };
+  dialog.close = () => { dialog.open = false; };
   banner.querySelectorAll = () => [reject, accept];
   const scripts = [], stored = new Map(), session = new Map(), events = [];
+  const cookies = new Map([['_ga', 'GA1.1.test'], ['_ga_TEST123', 'GA1.1.test'], ['needed', 'yes']]);
   if (choice) stored.set('kd_analytics_consent', choice);
   const document = {
-    title: 'Football book', head: { appendChild(script) { scripts.push(script.src); } },
+    title: 'Football book', referrer: 'https://example.org/', head: { appendChild(script) { scripts.push(script.src); } },
+    get cookie() { return [...cookies].map(([k, v]) => `${k}=${v}`).join('; '); },
+    set cookie(value) { const name = value.split('=')[0]; if (value.includes('Max-Age=0')) cookies.delete(name); },
     createElement() { return {}; },
-    getElementById(key) { return key === 'site-config' ? { textContent: JSON.stringify({ ga4: id, book: { id: 'first-time-football-coach', title: 'Football Coach', category: 'guides', asin: 'B0HJDH6831' } }) } : key === 'cookie-notice' ? banner : null; },
-    querySelector(key) { return ({ '.menu-toggle': menu, '#primary-nav': element(), '.submenu-toggle': submenu, '.preview-dialog': null })[key] || null; },
-    querySelectorAll(key) { return key === '.amazon-link' ? [amazon] : []; },
+    getElementById(key) { return key === 'site-config' ? { textContent: JSON.stringify({ ga4: id, book: { id: 'first-time-football-coach', title: 'Football Coach', category: 'guides', asin: 'B0HJDH6831' } }) } : key === 'cookie-notice' ? banner : key === 'reset-consent' ? reset : null; },
+    querySelector(key) { return ({ '.menu-toggle': menu, '#primary-nav': element(), '.submenu-toggle': submenu, '.preview-dialog': dialog })[key] || null; },
+    querySelectorAll(key) { return key === '.amazon-link' ? [amazon] : key === '[data-preview]' ? [preview] : []; },
   };
+  const location = { search: '?utm_source=pinterest&utm_campaign=launch', href: 'https://example.test/books/first-time-football-coach/', reload() { location.reloaded = true; } };
   const context = {
-    document, location: { search: '?utm_source=pinterest&utm_campaign=launch', href: 'https://example.test/books/first-time-football-coach/' },
+    document, location,
     localStorage: { getItem: k => stored.get(k), setItem: (k, v) => stored.set(k, v), removeItem: k => stored.delete(k) },
     sessionStorage: { getItem: k => session.get(k), setItem: (k, v) => session.set(k, v), removeItem: k => session.delete(k) },
     URLSearchParams, Date, window: { dataLayer: { push(args) { if (failEvent && args[0] === 'event') throw Error('analytics unavailable'); events.push(args); } } },
   };
   vm.runInNewContext(source, context);
-  return { banner, accept, reject, amazon, menu, submenu, scripts, stored, session, events };
+  return { banner, accept, reject, amazon, menu, submenu, preview, dialog, reset, scripts, stored, session, events, cookies, location };
 }
 
 let state = run({});
@@ -45,6 +56,7 @@ assert.equal(state.banner.hidden, false);
 assert.equal(state.scripts.length, 0);
 assert.equal(state.session.size, 0);
 state.amazon.handlers.click();
+state.preview.handlers.click();
 assert.equal(state.events.length, 0);
 state.accept.handlers.click();
 assert.equal(state.scripts.length, 1);
@@ -55,6 +67,20 @@ const click = state.events.find(args => args[0] === 'event' && args[1] === 'amaz
 assert.equal(click[2].book_id, 'first-time-football-coach');
 assert.equal(click[2].asin, 'B0HJDH6831');
 assert.equal(click[2].utm_campaign, 'launch');
+assert.equal(click[2].destination_url, 'https://www.amazon.co.uk/dp/B0HJDH6831');
+assert.equal(state.events.filter(args => args[0] === 'event' && args[1] === 'page_view').length, 1);
+assert.equal(state.events.filter(args => args[0] === 'event' && args[1] === 'book_page_view').length, 1);
+assert.equal(state.events.find(args => args[1] === 'page_view')[2].page_referrer, 'https://example.org/');
+state.preview.handlers.click();
+assert.equal(state.events.find(args => args[1] === 'preview_open')[2].page_number, 16);
+assert.equal(state.dialog.open, true);
+state.reset.handlers.click();
+assert.equal(state.stored.has('kd_analytics_consent'), false);
+assert.equal(state.session.has('kd_campaign'), false);
+assert.equal(state.cookies.has('_ga'), false);
+assert.equal(state.cookies.has('_ga_TEST123'), false);
+assert.equal(state.cookies.get('needed'), 'yes');
+assert.equal(state.location.reloaded, true);
 
 state = run({}); state.reject.handlers.click(); state.amazon.handlers.click();
 assert.equal(state.scripts.length, 0); assert.equal(state.events.length, 0);
@@ -67,4 +93,4 @@ assert.doesNotThrow(() => state.amazon.handlers.click());
 state = run({ id: '' });
 assert.equal(state.scripts.length, 0);
 assert.equal(state.banner.hidden, true);
-console.log('PASS: opt-in, rejection, campaign attribution, Amazon click, analytics failure, unconfigured state');
+console.log('PASS: no request/event before consent, page/book/preview/click events, attribution, withdrawal, analytics failure, unconfigured state');
