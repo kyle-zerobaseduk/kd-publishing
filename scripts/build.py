@@ -7,7 +7,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BOOKS = json.loads((ROOT / 'catalogue/books.json').read_text())
-ORIGIN = os.environ.get('KD_SITE_URL', '').rstrip('/')
+# Verified GitHub Pages production address. Override only when the live domain changes.
+ORIGIN = os.environ.get('KD_SITE_URL', 'https://kyle-zerobaseduk.github.io/kd-publishing').rstrip('/')
 GA_ID = os.environ.get('KD_GA4_ID', '')
 CATS = {
     'puzzles': ('Word Search & Puzzle Books', 'Find a puzzle for a quiet moment, a favourite subject or a thoughtful gift.'),
@@ -32,7 +33,7 @@ def prefix(path):
 
 
 def url(path):
-    return f'{ORIGIN}/{path}' if ORIGIN else ''
+    return f'{ORIGIN}/{path.removesuffix("index.html")}' if ORIGIN else ''
 
 
 def cover(book, pre, loading='lazy'):
