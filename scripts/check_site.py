@@ -48,6 +48,7 @@ def check():
     assert len({b['id'] for b in books}) == len(books)
     live = sum(b['status'] == 'live' for b in books)
     assert len({b['asin'] for b in books if b['asin']}) == live
+    assert next(b for b in books if b['id'] == 'season-planner')['asin'] == 'B0HJ6HGVC4'
     all_pages = list(ROOT.rglob('index.html'))
     category_count = len({b['category'] for b in books})
     assert len(all_pages) == len(books) + category_count + 6, len(all_pages)
