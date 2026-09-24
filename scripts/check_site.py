@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from PIL import Image
-from build import ORIGIN as PRODUCTION_URL
+from build import GA_ID, ORIGIN as PRODUCTION_URL
 
 ROOT = Path(__file__).resolve().parents[1]
 books = json.loads((ROOT / 'catalogue/books.json').read_text())
@@ -52,7 +52,10 @@ def check():
     category_count = len({b['category'] for b in books})
     assert len(all_pages) == len(books) + category_count + 6, len(all_pages)
     for page in all_pages:
-        parsed = Inspect(); parsed.feed(page.read_text())
+        markup = page.read_text()
+        parsed = Inspect(); parsed.feed(markup)
+        config = json.loads(re.search(r'<script type="application/json" id="site-config">([^<]+)</script>', markup).group(1))
+        assert config['ga4'] == GA_ID, page
         assert (parsed.h1,parsed.title,parsed.description) == (1,1,1), page
         expected = PRODUCTION_URL + '/' + page.relative_to(ROOT).as_posix().removesuffix('index.html')
         assert parsed.canonical == [expected] and parsed.og_urls == [expected], page
@@ -68,6 +71,7 @@ def check():
         assert all(x.get('alt') for x in parsed.images), page
         if page.parent.parent.name == 'books' and page.parent.name != 'books':
             b = next(b for b in books if b['id'] == page.parent.name)
+            assert config['book'] == {'id': b['id'], 'title': b.get('shortTitle') or b['title'], 'category': b['category'], 'asin': b['asin']}, b['id']
             assert parsed.amazon == ([f'https://www.amazon.co.uk/dp/{b["asin"]}'] if b['status'] == 'live' else []), b['id']
             assert len(parsed.amazon_buttons) == (1 if b['status'] == 'live' else 0), b['id']
             if b['status'] == 'live':

@@ -73,7 +73,7 @@ def shell(path, title, description, main, image=None, book=None):
       <nav id="primary-nav" class="nav" aria-label="Primary"><a href="{pre}">Home</a><div class="nav-group"><a href="{pre}books/">Books</a><button class="submenu-toggle" type="button" aria-expanded="false" aria-label="Show book categories">⌄</button><div class="submenu">{''.join(f'<a href="{pre}categories/{key}/">{e(label)}</a>' for key,(label,_) in CATS.items())}</div></div><a href="{pre}latest/">Latest releases</a><a href="{pre}about/">About</a><a href="{pre}contact/">Contact</a></nav></div></header>'''
     footer = f'''<footer class="footer"><div class="container footer-inner"><div><a class="footer-brand" href="{pre}">K.D.PUBLISHING</a><p>Books for curiosity, creativity and everyday life.</p></div><div><a href="{pre}books/">All books</a><a href="{pre}about/">About</a><a href="{pre}contact/">Contact</a><a href="{pre}privacy/">Privacy & analytics</a></div><small>© {date.today().year} K.D.Publishing</small></div></footer>'''
     consent = '<div class="cookie-notice" id="cookie-notice" hidden><p>May we use optional analytics to understand which books and previews people view? <a href="'+pre+'privacy/">Privacy details</a></p><div><button type="button" data-consent="reject">No thanks</button><button type="button" class="button button-small" data-consent="accept">Allow analytics</button></div></div>'
-    config = json.dumps({'ga4':GA_ID,'book':({'id':book['id'],'title':full_title(book),'category':book['category'],'asin':book['asin']} if book else None)}).replace('<','\\u003c')
+    config = json.dumps({'ga4':GA_ID,'book':({'id':book['id'],'title':short_title(book),'category':book['category'],'asin':book['asin']} if book else None)}).replace('<','\\u003c')
     out = f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>{e(title)} | K.D.Publishing</title><meta name="description" content="{e(description)}">{canonical}<meta property="og:type" content="{'book' if book else 'website'}"><meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(description)}">{ogurl}{ogimage}<meta name="twitter:card" content="summary_large_image"><link rel="stylesheet" href="{pre}styles.css"><script type="application/json" id="site-config">{config}</script><script defer src="{pre}site.js"></script>{structured}</head><body><a class="skip-link" href="#main">Skip to content</a>{nav}<main id="main">{main}</main>{footer}{consent}</body></html>'''
     destination = ROOT / path
     destination.parent.mkdir(parents=True,exist_ok=True)
@@ -133,6 +133,7 @@ def simple():
 if __name__ == '__main__':
     assert len({b['id'] for b in BOOKS})==len(BOOKS)
     assert all(b['category'] in CATS and b['status'] in ('live','in-review') for b in BOOKS)
+    assert all(len(short_title(b)) <= 100 for b in BOOKS)
     assert all(bool(b['asin']) == (b['status']=='live') for b in BOOKS)
     assert len({b['asin'] for b in BOOKS if b['asin']})==sum(b['status']=='live' for b in BOOKS)
     home();catalogue();products();simple()

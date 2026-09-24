@@ -22,13 +22,15 @@ Events (only after consent):
 | Event | Meaning | Parameters |
 | --- | --- | --- |
 | `page_view` | A page loaded | page title/location/referrer; acquisition handled by GA4 |
-| `book_page_view` | A product page loaded | `book_id`, `book_title`, `category`, `asin` |
+| `book_page_view` | A product page loaded | `book_id`, short display `book_title`, `category`, `asin` |
 | `preview_open` | A sample enlarged | same book fields plus `page_number` |
 | `amazon_click` | The Amazon UK button clicked | same book fields plus `destination_url` |
 
 Available `utm_source`, `utm_medium`, `utm_campaign`, and `utm_content` are carried in the visitor's session **after consent**. The landing page URL and referrer are preserved for GA4. For links posted by K.D.Publishing, use lowercase, consistent values such as `?utm_source=pinterest&utm_medium=social&utm_campaign=high_fantasy_realms_launch` (other sources: `instagram`, `facebook`, `x`; optional `utm_content=pin_01`). Use these tags on links **to this website**, never on internal site links or Amazon destinations. Ordinary Google search and other referrals can be identified automatically where a referrer is available; direct/unknown traffic may remain `(direct) / (none)`.
 
 In GA4, use the Realtime report to confirm events; use Reports → Acquisition for source/medium and an Explore free-form report with `book_id` and event name to compare `book_page_view`, `preview_open` and `amazon_click`. Register `book_id`, `book_title`, `category`, `asin`, `destination_url` and `page_number` as event-scoped custom dimensions if you need them in GA4 reports; GA4's default event metrics provide counts. Divide a book's `amazon_click` event count by its `book_page_view` event count for its website-to-Amazon click-through rate. This tracks click interest, **not sales or Amazon conversions**; repeat clicks and visits affect the ratio. Traffic source depends on available campaign/referrer information and consent.
+
+The event's `book_title` uses the concise `shortTitle` from the same catalogue record; the full title stays on the product page. This keeps the event value within GA4's 100-character parameter limit. Use stable `book_id` as the reporting key when titles change.
 
 ## Release checks still required
 
