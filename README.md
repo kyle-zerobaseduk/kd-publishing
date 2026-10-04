@@ -13,6 +13,14 @@ For a live book whose Amazon UK destination has not been confirmed to work, set 
 
 Static files require no paid hosting or runtime service. The verified production address is `https://kyle-zerobaseduk.github.io/kd-publishing/` (the existing GitHub Pages site). The builder uses it for canonical URLs, absolute Open Graph URLs, the sitemap and `robots.txt`. Set `KD_SITE_URL` only if the production domain actually changes; rebuild and check every generated page before deployment. The separate owner-only ChatGPT Sites preview is not the production domain.
 
+## October 2026 catalogue update — pending Amazon UK verification
+
+`i-deleted-the-honest-version` adds the Humour & Gift Books collection. `british-nostalgia` updates the existing in-review record to live. KDP Bookshelf screenshots dated 4 October confirm ASINs `B0HLSTBBL9` and `B0HLSNSY9N`. Both standard UK product destinations are recorded but have `amazonLinkEnabled: false` until the matching UK pages can be confirmed. Amazon rejected the current verification browser session. Do not merge/deploy this draft until both destinations are confirmed and the flags removed.
+
+Only these two records use the optional `features`, `giftNote`, `publisher`, `format`, `coverSize` and `coverTrim` fields. `coverTrim` specifies front-cover trim width/height in PDF points, excluding the wrap's 9-point bleed. `catalogueAdded` records the date the live title was added to the website, for recent-release ordering when the publication date is unverified; it is not a publication-date claim.
+
+The new front-cover derivatives use the supplied final approved PDFs. Four workplace-humour samples use pages 5, 8, 14 and 55 of the supplied 62-page interior candidate. Existing British Nostalgia samples are retained. Source PDFs and listing screenshots stay outside the public repository. No prices, publication dates or book page counts are added to customer-facing pages.
+
 ## Analytics
 
 **Configured stream: `G-64LMW6KFB7`.** The builder embeds this genuine GA4 Web Stream Measurement ID into each page by default. `KD_GA4_ID` remains an optional build-time override. This does not load Google Analytics until the visitor opts in. The Google-side Enhanced measurement setting should be **off**: this site sends its own page views, preview and Amazon events, so automatic page-view and outbound-click events are unnecessary. Do not paste a second Google tag or add Google Tag Manager. Check a consented test visit in GA4 Realtime before treating data collection as verified. Preview testing with the same ID can mix preview traffic into production reports; identify those test visits by their preview hostname or exclude them in reporting.
