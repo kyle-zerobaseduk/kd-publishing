@@ -13,9 +13,9 @@ For a live book whose Amazon UK destination has not been confirmed to work, set 
 
 Static files require no paid hosting or runtime service. The verified production address is `https://kyle-zerobaseduk.github.io/kd-publishing/` (the existing GitHub Pages site). The builder uses it for canonical URLs, absolute Open Graph URLs, the sitemap and `robots.txt`. Set `KD_SITE_URL` only if the production domain actually changes; rebuild and check every generated page before deployment. The separate owner-only ChatGPT Sites preview is not the production domain.
 
-## October 2026 catalogue update — pending Amazon UK verification
+## October 2026 catalogue update
 
-`i-deleted-the-honest-version` adds the Humour & Gift Books collection. `british-nostalgia` updates the existing in-review record to live. KDP Bookshelf screenshots dated 4 October confirm ASINs `B0HLSTBBL9` and `B0HLSNSY9N`. Both standard UK product destinations are recorded but have `amazonLinkEnabled: false` until the matching UK pages can be confirmed. Amazon rejected the current verification browser session. Do not merge/deploy this draft until both destinations are confirmed and the flags removed.
+`i-deleted-the-honest-version` adds the Humour & Gift Books collection. `british-nostalgia` updates the existing in-review record to live. KDP Bookshelf screenshots dated 4 October confirm ASINs `B0HLSTBBL9` and `B0HLSNSY9N`. The owner supplied UK Share links `https://amzn.eu/d/0cXanCA3` (Honest Version) and `https://amzn.eu/d/0flnKdY0` (British Nostalgia). Their HTTP redirects were matched to the confirmed ASINs on amazon.co.uk; both purchase buttons are enabled and use these exact Share links. Amazon rejects the automated session after the redirect, so the final product-page rendering could not be independently checked.
 
 Only these two records use the optional `features`, `giftNote`, `publisher`, `format`, `coverSize` and `coverTrim` fields. `coverTrim` specifies front-cover trim width/height in PDF points, excluding the wrap's 9-point bleed. `catalogueAdded` records the date the live title was added to the website, for recent-release ordering when the publication date is unverified; it is not a publication-date claim.
 
