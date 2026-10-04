@@ -127,4 +127,21 @@ assert.equal(plannerClick.destination_url, 'https://amzn.eu/d/09mIs6KH');
 state = run({ id: '' });
 assert.equal(state.scripts.length, 0);
 assert.equal(state.banner.hidden, true);
+// Use each generated new product page's real tracking configuration.
+for (const slug of ['british-nostalgia', 'i-deleted-the-honest-version']) {
+  const html = fs.readFileSync(`books/${slug}/index.html`, 'utf8');
+  const config = JSON.parse(html.match(/id="site-config">([^<]+)<\/script>/)[1]);
+  const book = JSON.parse(fs.readFileSync('catalogue/books.json', 'utf8')).find(b => b.id === slug);
+  state = run({ choice: 'yes', id: config.ga4, book: config.book, linkHref: book.amazonUrl });
+  state.amazon.handlers.click();
+  assert.equal(state.events.filter(a => a[1] === 'page_view').length, 1);
+  const view = state.events.find(a => a[1] === 'book_page_view')[2];
+  const outbound = state.events.find(a => a[1] === 'amazon_click')[2];
+  assert.equal(view.book_id, slug);
+  assert.equal(outbound.book_id, slug);
+  assert.equal(outbound.book_title, book.shortTitle);
+  assert.equal(outbound.asin, book.asin);
+  assert.equal(outbound.category, book.category);
+  assert.equal(outbound.destination_url, book.amazonUrl);
+}
 console.log('PASS: pre-consent privacy, opt-in/rejection/withdrawal, navigation, book funnel, campaign/referrer, analytics failure, unconfigured state');

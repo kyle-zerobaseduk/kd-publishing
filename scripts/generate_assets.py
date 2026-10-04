@@ -42,8 +42,15 @@ for book in books:
     if book['coverSource']:
         pdf = fitz.open(find(book['coverSource']))
         page = pdf[0]
-        im = image(page, 1050)
-        if page.rect.width / page.rect.height > 1.15:
+        if book.get('coverTrim'):
+            # Trim-sized front panel, excluding the wrap spine and 0.125-inch bleed.
+            width, height = book['coverTrim']
+            clip = fitz.Rect(page.rect.width - 9 - width, 9, page.rect.width - 9, 9 + height)
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2), clip=clip, alpha=False)
+            im = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
+        else:
+            im = image(page, 1050)
+        if not book.get('coverTrim') and page.rect.width / page.rect.height > 1.15:
             # KDP wrap: back, spine, front. Keep only the right-hand front panel.
             front_points = 576 if 'football-coach' in ident or ident == 'season-planner' else 612
             left = round(im.width * (1 - front_points / page.rect.width))
