@@ -38,10 +38,11 @@ def url(path):
 
 
 def cover(book, pre, loading='lazy'):
-    image = ROOT / 'assets/covers' / f"{book['id']}.webp"
+    image_path = book.get('coverImage') or f"assets/covers/{book['id']}.webp"
+    image = ROOT / image_path
     if image.exists():
         width, height = book.get('coverSize', [740, 970])
-        return f'<img src="{pre}assets/covers/{book["id"]}.webp" alt="Front cover of {e(short_title(book))}" width="{width}" height="{height}" loading="{loading}">'
+        return f'<img src="{pre}{image_path}" alt="Front cover of {e(short_title(book))}" width="{width}" height="{height}" loading="{loading}">'
     return f'<div class="cover-pending" role="img" aria-label="Cover artwork pending for {e(short_title(book))}"><span>K.D.PUBLISHING</span><strong>{e(short_title(book))}</strong><small>Cover image pending</small></div>'
 
 
@@ -110,7 +111,7 @@ def catalogue():
 
 def products():
     for b in BOOKS:
-        pre='../../';name=short_title(b); image=f'assets/covers/{b["id"]}.webp' if b['coverSource'] else None
+        pre='../../';name=short_title(b); image=b.get('coverImage') or (f'assets/covers/{b["id"]}.webp' if b['coverSource'] else None)
         amazon_url=b.get('amazonUrl') or f'https://www.amazon.co.uk/dp/{b["asin"]}'
         purchase=(f'<a class="button amazon-link" href="{e(amazon_url)}" target="_blank" rel="noopener noreferrer" data-book-id="{b["id"]}" data-asin="{b["asin"]}">Buy on Amazon UK <span aria-hidden="true">↗</span></a><small>Amazon handles your order. Prices and availability may change there.</small>' if b['status']=='live' and b.get('amazonLinkEnabled',True) else '<p class="review-note">Amazon UK purchase link temporarily unavailable. We’re checking this listing.</p>' if b['status']=='live' else '<p class="review-note">Paperback in review. An Amazon purchase link will be added after publication.</p>')
         specs=f'<div class="facts"><div><dt>Format</dt><dd>{e(b.get("format","Paperback"))}</dd></div><div><dt>Author</dt><dd>Kyle Dyer</dd></div><div><dt>Collection</dt><dd>{e(CATS[b["category"]][0])}</dd></div>'+(f'<div><dt>Publisher</dt><dd>{e(b["publisher"])}</dd></div>' if b.get('publisher') else '')+(f'<div><dt>ASIN</dt><dd>{b["asin"]}</dd></div>' if b['asin'] else '')+'</div>'
