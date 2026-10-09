@@ -8,7 +8,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const modules = path.resolve(process.env.KD_LIGHTHOUSE_MODULE_DIR);
-const { default: puppeteer } = await import(pathToFileURL(path.join(modules, 'puppeteer-core/lib/esm/puppeteer/puppeteer-core.js')));
+const puppeteerDir = path.join(modules, 'puppeteer-core');
+const puppeteerPackage = JSON.parse(fs.readFileSync(path.join(puppeteerDir, 'package.json'), 'utf8'));
+const { default: puppeteer } = await import(pathToFileURL(path.join(puppeteerDir, puppeteerPackage.main)));
 const targets = ['', 'books/first-time-football-coach/', 'books/season-planner/', 'books/british-nostalgia/', 'books/i-deleted-the-honest-version/', 'books/cozy-christmas-word-search/'];
 const widths = [320, 360, 390, 768, 1024, 1440];
 const types = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.webp': 'image/webp' };
