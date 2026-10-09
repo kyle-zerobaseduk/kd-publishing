@@ -24,7 +24,7 @@ try{
   page.on('pageerror',e=>errors.push(e.message));await page.setRequestInterception(true);
   page.on('request',req=>{if(!req.url().startsWith(origin)&&!req.url().startsWith('data:')){external.push(req.url());req.abort();}else req.continue();});
   await page.evaluateOnNewDocument(()=>{window.kdLayoutShift=0;new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput)window.kdLayoutShift+=e.value;}).observe({type:'layout-shift',buffered:true});});
-  await page.goto(origin+'/'+target,{waitUntil:'networkidle0'});await page.evaluate(()=>document.fonts.ready);const initialLayoutShift=await page.evaluate(()=>window.kdLayoutShift);
+  await page.goto(origin+'/'+target,{waitUntil:'networkidle0'});await page.evaluate(()=>document.fonts.ready);const initialLayoutShift=await page.evaluate(()=>window.kdLayoutShift);assert.ok(initialLayoutShift<.01,`${target} ${width}px initial shift ${initialLayoutShift}`);
   const issues=await page.evaluate(()=>{const a=[];if(document.documentElement.scrollWidth>innerWidth+1)a.push('overflow');for(const n of document.querySelectorAll('main h1,main p,main li,main svg')){const b=n.getBoundingClientRect();if(b.width&&(b.left< -1||b.right>innerWidth+1))a.push('content outside viewport');}return a;});
   assert.deepEqual(issues,[],target+' '+width);assert.deepEqual(errors,[]);assert.deepEqual(external,[],'requests before consent');
   if(width<=768){await page.click('.menu-toggle');assert.equal(await page.$eval('.menu-toggle',e=>e.getAttribute('aria-expanded')),'true');assert.equal(await page.$eval('.nav a[href$="resources/"]',e=>e.getBoundingClientRect().height>=44),true);await page.click('.menu-toggle');}
@@ -70,6 +70,7 @@ try{
    await page.$eval('[data-related-book]',e=>e.click());
    if(record.downloads.length)await page.$eval('[data-resource-download]',e=>e.click());
    assert.deepEqual(external,[]);
+   await page.reload({waitUntil:'networkidle0'});assert.equal(await page.$eval('#cookie-notice',e=>e.hidden),true);assert.deepEqual(external,[]);
    await page.evaluate(()=>localStorage.removeItem('kd_analytics_consent'));await page.reload({waitUntil:'networkidle0'});
    await page.focus('[data-consent="reject"]');await page.keyboard.press('Tab');
    assert.equal(await page.evaluate(()=>document.activeElement.dataset.consent),'accept');
@@ -85,6 +86,14 @@ try{
    const events=await page.evaluate(()=>Array.from(window.dataLayer,a=>Array.from(a)));
    assert.equal(events.filter(a=>a[1]==='related_book_click').length,1);
    assert.equal(events.filter(a=>a[1]==='printable_download').length,record.downloads.length?1:0);
+   await page.goto(origin+'/privacy/',{waitUntil:'networkidle0'});
+   assert.equal(await page.$eval('#cookie-notice',e=>e.hidden),true);
+   await page.evaluate(()=>{document.cookie='_ga_TEST=example; path=/';sessionStorage.setItem('kd_campaign','{}');});external.length=0;
+   await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('#reset-consent')]);
+   assert.equal(await page.evaluate(()=>localStorage.getItem('kd_analytics_consent')),null);
+   assert.equal(await page.evaluate(()=>sessionStorage.getItem('kd_campaign')),null);
+   assert.equal(await page.evaluate(()=>document.cookie.includes('_ga_TEST')),false);
+   assert.equal(await page.$eval('#cookie-notice',e=>e.hidden),false);assert.deepEqual(external,[]);
   }
   results.push({target:target||'/',width,status:'pass',initialLayoutShift});await context.close();console.log(`PASS ${target||'/'} ${width}px`);
  }

@@ -9,7 +9,7 @@
 - Secret Santa lead recognises drawing an unfamiliar colleague and a vague request for something funny. Publisher disclosure and price/availability boundaries remain exact.
 - Rotation lead introduces the touchline problem before the existing arithmetic. Arithmetic, tables, rules and caveats remain exact.
 - First-session checklist and Christmas openings reviewed and retained because they already give concrete, reader-focused starts.
-- CSS-only mobile consent refinement: smaller vertical padding/gap, unchanged text/font size, equal-width neutral buttons. Privacy link, 44px targets, preferences, withdrawal and consent-first script are preserved. Desktop stays unchanged.
+- Mobile consent refinement: smaller vertical padding/gap, unchanged text/font size, equal-width neutral buttons. Privacy link, 44px targets, preferences, withdrawal and consent-first script are preserved. Desktop spacing/styling stays unchanged. A small first-party inline preference read resolves banner visibility before main content parses, preventing late banner insertion. The consent-first analytics script is unchanged; the bootstrap never loads analytics or writes a preference.
 
 ## Release selection
 
@@ -48,7 +48,7 @@ Owner checklist:
 
 ## Validation and approvals
 
-Local priority build, site/design/SEO preservation, exact release scope, all 24 tracking funnels and selected PDF/puzzle checks passed. All-six/eight-sheet technical checks also passed before output pruning. GitHub browser evidence on this refinement must pass before final owner review; latest run/metrics will be recorded in the updated review report and PR.
+Local priority build, site/design/SEO preservation, exact release scope, all 24 tracking funnels and selected PDF/puzzle checks passed. All-six/eight-sheet technical checks also passed before output pruning. GitHub browser evidence including initial layout-shift, stored choices and withdrawal must pass before final owner review; latest run/metrics will be recorded in the updated review report and PR.
 
 Before release: approve final three article texts/disclosure/licence wording, mobile consent appearance and exact priority scope; complete physical proofs for the three launch sheets; then provide separate explicit merge/deploy authorisation. No approval is fabricated in article records.
 

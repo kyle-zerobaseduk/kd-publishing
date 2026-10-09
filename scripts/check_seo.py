@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 
 from build_resources import selected
 from resource_content import route
-from build import BOOKS, CATS, ORIGIN, ROOT, full_title, verification_tag
+from build import BOOKS, CATS, ORIGIN, ROOT, full_title, verification_tag, CONSENT_BOOTSTRAP
 
 PRIORITY = {'first-time-football-coach', 'season-planner', 'british-nostalgia',
             'i-deleted-the-honest-version', 'cozy-christmas-word-search'}
@@ -122,6 +122,7 @@ def main():
         baseline_css=old('styles.css').decode()
         assert (ROOT/'styles.css').read_text().startswith(baseline_css), 'Existing design CSS altered'
         def protected(markup):
+            markup=markup.replace(CONSENT_BOOTSTRAP, "")
             markup=markup.replace('<main id="main" tabindex="-1">', '<main id="main">')
             markup=re.sub(r'<a href="(?:../)*resources/">Resources</a>', '', markup)
             markup=re.sub(r', "resource": null', '', markup)
