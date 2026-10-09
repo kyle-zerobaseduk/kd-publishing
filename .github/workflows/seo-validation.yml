@@ -44,6 +44,11 @@ jobs:
           git diff --exit-code -- '*.html' sitemap.xml robots.txt
           mkdir -p "$RUNNER_TEMP/kd-baseline"
           git archive "$BASE_SHA" | tar -x -C "$RUNNER_TEMP/kd-baseline"
+      - name: Check responsive release layouts
+        env:
+          KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules
+          CHROME_PATH: /usr/bin/google-chrome
+        run: node scripts/check_responsive.mjs
       - name: Measure mobile lab performance
         env:
           KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules
