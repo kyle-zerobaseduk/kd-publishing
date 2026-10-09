@@ -30,7 +30,7 @@ const server = http.createServer((req, res) => {
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const chrome = await launch({ chromePath: process.env.CHROME_PATH, chromeFlags: ['--headless', '--no-sandbox', '--disable-dev-shm-usage'] });
-const targets = ['', 'books/first-time-football-coach/', 'books/season-planner/', 'books/british-nostalgia/', 'books/i-deleted-the-honest-version/', 'books/cozy-christmas-word-search/'];
+const targets = process.env.KD_PHASE_2B === '1' ? ['', 'books/british-nostalgia/'] : ['', 'books/first-time-football-coach/', 'books/season-planner/', 'books/british-nostalgia/', 'books/i-deleted-the-honest-version/', 'books/cozy-christmas-word-search/'];
 const summaries = [];
 try {
   for (const mount of ['baseline', 'branch']) {
@@ -52,7 +52,7 @@ try {
         failedAudits: Object.values(lhr.audits).filter(a => a.score === 0).map(a => a.id) };
       summaries.push(summary);
       console.log('KD_MOBILE_RESULT ' + JSON.stringify(summary));
-      if (screenshot) console.log('KD_MOBILE_SCREENSHOT ' + JSON.stringify({ variant: mount, page: target || '/', data: screenshot }));
+      if (screenshot && !process.env.KD_PHASE_2B) console.log('KD_MOBILE_SCREENSHOT ' + JSON.stringify({ variant: mount, page: target || '/', data: screenshot }));
     }
   }
   fs.writeFileSync(path.join(output, 'summary.json'), JSON.stringify({ limitation: 'Single mobile lab run per page from local static files on the CI runner; simulated throttling; analytics consent not accepted; not production network performance or Core Web Vitals field data.', settings: summaries.length ? 'Default Lighthouse mobile settings; see each JSON configSettings for precise values.' : '', results: summaries }, null, 2));

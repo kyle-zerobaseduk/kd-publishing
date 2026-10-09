@@ -272,3 +272,24 @@ p { margin: 0 0 1.25rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Phase 2B: resource content uses the approved typography and palette. */
+.resource-article section + section { margin-top: 3rem; }
+.resource-article ul { padding-left: 1.4rem; }
+.resource-article li + li { margin-top: .65rem; }
+.resource-article h2 { text-wrap: pretty; }
+.resource-byline { color: var(--muted); font-size: .875rem; }
+.resource-downloads { border-block: 1px solid var(--line); padding-block: 1.5rem; }
+.resource-downloads a { display: inline-flex; align-items: center; min-height: 44px; }
+.resource-table-wrap { max-width: 100%; overflow-x: auto; margin-block: 1.5rem; }
+.resource-table-wrap table { width: 100%; border-collapse: collapse; text-align: left; font-size: .9375rem; }
+.resource-table-wrap caption { text-align: left; font-weight: 600; margin-bottom: .75rem; }
+.resource-table-wrap th, .resource-table-wrap td { padding: .75rem; border: 1px solid var(--line); vertical-align: top; }
+.resource-table-wrap th { background: var(--shelf); }
+.pitch-layout { margin: 2rem 0; }
+.pitch-layout svg { display: block; width: 100%; height: auto; aspect-ratio: 480 / 330; }
+.pitch-layout figcaption { font-size: .875rem; color: var(--muted); margin-top: .75rem; }
+.book-resources li + li { margin-top: .65rem; }
+/* Reserve the existing mobile hero cover geometry before the eager image decodes. */
+.hero-book-image img { aspect-ratio: 638 / 845; }
+@media (max-width: 800px) { .resource-table-wrap th, .resource-table-wrap td { padding: .5rem; } }

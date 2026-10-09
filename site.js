@@ -51,6 +51,7 @@
     script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(config.ga4);
     document.head.appendChild(script);
     event('page_view', { page_title: document.title, page_location: location.href, page_referrer: document.referrer });
+    if (config.resource) event('resource_page_view', { resource_id: config.resource.id, resource_cluster: config.resource.cluster });
     if (config.book) event('book_page_view', { book_id: config.book.id, book_title: config.book.title, category: config.book.category, asin: config.book.asin || '' });
   }
   if (validId) {
@@ -88,6 +89,12 @@
       asin: config.book.asin,
       destination_url: link.href
     });
+  }));
+  document.querySelectorAll('[data-resource-download]').forEach(link => link.addEventListener('click', () => {
+    event('printable_download', { resource_id: link.dataset.resourceDownload, asset_id: link.dataset.assetId, destination_url: link.href });
+  }));
+  document.querySelectorAll('[data-related-book]').forEach(link => link.addEventListener('click', () => {
+    event('related_book_click', { resource_id: link.dataset.resourceId, book_id: link.dataset.relatedBook });
   }));
   const dialog = document.querySelector('.preview-dialog');
   if (dialog) {

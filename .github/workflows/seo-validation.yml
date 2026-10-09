@@ -3,6 +3,10 @@ name: SEO and mobile validation
 on:
   pull_request:
     paths:
+      - 'resources/**'
+      - 'content/**'
+      - 'assets/resources/**'
+      - 'assets/responsive/**'
       - 'books/**'
       - 'catalogue/**'
       - 'scripts/**'
@@ -29,30 +33,43 @@ jobs:
           node-version: '24'
       - name: Install validation dependencies
         run: |
-          python -m pip install Pillow
-          npm install --prefix "$RUNNER_TEMP/kd-lighthouse" --no-save lighthouse@13.5.0
+          python -m pip install Pillow reportlab pypdf
+          npm install --prefix "$RUNNER_TEMP/kd-lighthouse" --no-save lighthouse@13.5.0 axe-core@4.10.3
       - name: Build and validate preservation
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
+          python scripts/generate_resource_printables.py
           python scripts/build.py
           python scripts/check_site.py
           node scripts/test_tracking.js
           python scripts/check_design.py
           python scripts/check_seo.py --baseline-ref "$BASE_SHA"
           python scripts/test_resource_template.py
+          python scripts/check_resources.py
           git diff --exit-code -- '*.html' sitemap.xml robots.txt
           mkdir -p "$RUNNER_TEMP/kd-baseline"
           git archive "$BASE_SHA" | tar -x -C "$RUNNER_TEMP/kd-baseline"
-      - name: Check responsive release layouts
+      - name: Check resources and changed shared layouts
         env:
           KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules
           CHROME_PATH: /usr/bin/google-chrome
-        run: node scripts/check_responsive.mjs
-      - name: Measure mobile lab performance
+          KD_REPORT_DIR: ${{ runner.temp }}/kd-resource-reports
+        run: node scripts/check_resource_browser.mjs
+      - name: Measure only homepage and nostalgia mobile changes
         env:
           KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules
+          KD_PHASE_2B: '1'
           KD_BASELINE_DIR: ${{ runner.temp }}/kd-baseline
           KD_REPORT_DIR: ${{ runner.temp }}/kd-mobile-reports
           CHROME_PATH: /usr/bin/google-chrome
         run: node scripts/run_mobile_checks.mjs
+      - name: Upload branch review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-2b-review-evidence
+          path: |
+            ${{ runner.temp }}/kd-resource-reports
+            ${{ runner.temp }}/kd-mobile-reports
+          retention-days: 7

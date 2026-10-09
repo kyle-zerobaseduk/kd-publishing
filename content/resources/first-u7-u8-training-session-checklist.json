@@ -1,0 +1,124 @@
+{
+  "slug": "first-u7-u8-training-session-checklist",
+  "cluster": "football",
+  "title": "First U7/U8 Football Training Session: A Beginner Coach’s Checklist",
+  "seoTitle": "First U7/U8 session: beginner coach checklist",
+  "summary": "Prepare your first U7/U8 training session with a practical arrival plan, simple activities, safety checks and an A4 checklist for volunteer coaches.",
+  "description": "Prepare your first U7/U8 training session with a practical arrival plan, simple activities, safety checks and an A4 checklist for volunteer coaches.",
+  "priority": 2,
+  "relatedBookIds": [
+    "first-time-football-coach",
+    "season-planner"
+  ],
+  "author": "K.D.Publishing editorial",
+  "reviewedDate": "2026-10-09",
+  "ownerApproved": false,
+  "sections": [
+    {
+      "heading": "Make the first session easy to join",
+      "paragraphs": [
+        "Your first job is to make children feel able to take part. You do not need an impressive library of drills. A safe area, one ball each and two simple games give you enough to learn names, watch confidence and find out what the group needs next. Aim for children to understand the routine and want to return.",
+        "This checklist is for a new volunteer working with U7 or U8 children, broadly ages six and seven. It assumes the club has arranged an appropriate venue and adult support. Ask the club what qualifications, safeguarding arrangements and first-aid cover are required before you lead. A webpage is not a substitute for that preparation."
+      ]
+    },
+    {
+      "heading": "Before the day",
+      "paragraphs": [],
+      "items": [
+        "Confirm the time, exact meeting point, surface and adult support with the club.",
+        "Tell families what to bring: named water bottle, suitable boots, shin pads covered by socks and weather-appropriate clothing.",
+        "Ask parents/carers privately about information that affects safe participation and how the club records it. Do not discuss a child’s needs in front of the group.",
+        "Check attendance and collection arrangements. Know who can collect each child.",
+        "Pack a size 3 ball per child, spare balls, flat cones, bibs and the club’s agreed emergency information.",
+        "Plan two games and one easier version of each. Check that the player numbers work without a child waiting alone."
+      ]
+    },
+    {
+      "heading": "Before children step into the area",
+      "paragraphs": [
+        "Walk the space for damaged surfaces, hazards and balls coming from nearby activities. Mark a clear boundary and a resting/drinking place in sight of the adults. If you use portable goals, check the venue’s approved anchoring method. Set out the cones before children arrive and leave yourself room to greet families.",
+        "Count children in. A second adult can help with arrivals while you stay with the activity, according to club arrangements. Avoid creating a situation where one adult leaves an active group unattended to deal with a late arrival or toilet request."
+      ]
+    },
+    {
+      "heading": "A simple first-hour outline",
+      "paragraphs": [
+        "Use the small-squad session plan for detailed instructions if you have five or six U8 players. For an unfamiliar group, keep the challenge lower: remove opposition from the passing activity and use brief games. This suggested outline includes drinks, explanations and handover, not an hour of uninterrupted exercise."
+      ],
+      "table": {
+        "headers": [
+          "Minutes",
+          "What to do"
+        ],
+        "rows": [
+          [
+            "0–10",
+            "Greet children; free dribbling; learn names."
+          ],
+          [
+            "10–20",
+            "Explore gates: dribble through, turn and find another."
+          ],
+          [
+            "20–25",
+            "Drink, check comfort and show the next game."
+          ],
+          [
+            "25–35",
+            "Pairs or a pair plus trio: pass or dribble through a gate."
+          ],
+          [
+            "35–40",
+            "Drink and reorganise calmly."
+          ],
+          [
+            "40–55",
+            "Short 2v2 or 3v3 games; rotate roles between bouts."
+          ],
+          [
+            "55–60",
+            "One reflection question, equipment collection and agreed handover."
+          ]
+        ]
+      }
+    },
+    {
+      "heading": "What to say, and when to stop talking",
+      "paragraphs": [
+        "Show the action, give one instruction and start. “Find a gate with space” is easier to use than a speech about scanning and spatial awareness. Watch a short spell before intervening. If everyone looks confused, stop and show the action again; if one child is unsure, help them individually while the other adult keeps the group in sight.",
+        "Praise something observable: “You looked up and found another gate.” Avoid comparing children or assuming the quietest child has understood. Let children demonstrate instead of having to explain in words. Offer a brief rest or a simpler role when needed; do not make a child earn the right to join back in."
+      ]
+    },
+    {
+      "heading": "Keep U7 and U8 match formats separate",
+      "paragraphs": [
+        "The current England Football guidance uses 3v3 as the U7 entry format from 2026/27 and 5v5 for U8. U7 match organisation should follow that format rather than a U8 bench-rotation sheet. For this first-session training outline, keep games at no more than 3v3 for U7. Five U7 players can use 2v2 with a rotating helper in training; do not label that an official fixture.",
+        "The FA handbook says not to introduce heading in U5–U11 training. Keep these activities with the ball at feet and do not throw balls for heading. Check the current national-association and competition guidance where you coach, particularly outside England. Suggested timings and coaching phrases on this page are ours."
+      ]
+    },
+    {
+      "heading": "After the session: three notes are enough",
+      "paragraphs": [
+        "Record what helped children join in, which activity needed simplifying and one adjustment for next time. For example: “Wider gates helped; pair-and-trio worked with five; next week start with the same game before adding a defender.” Use the club’s appropriate records for any welfare concerns, not informal public notes.",
+        "Ask families for practical feedback such as whether the joining and collection routine was clear. Avoid promising a position, ability group or future selection on the basis of one session. Keep the next session familiar enough that children can build confidence."
+      ]
+    }
+  ],
+  "downloads": [
+    {
+      "path": "assets/resources/first-session-checklist.pdf",
+      "label": "Download the first-session checklist",
+      "printNotes": "A4 portrait · print at 100% / actual size"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://harpn.s3-eu-west-2.amazonaws.com/fa/futurefit/Mini%20Soccer%20Handbook%202026-27%201.pdf",
+      "label": "The FA Mini-Soccer and Youth Futsal Handbook 2026/27 (updated August 2026): formats, equipment, heading and substitutions"
+    },
+    {
+      "url": "https://futurefit.englandfootball.com/futurefit/",
+      "label": "England Football FutureFit: current format guidance"
+    }
+  ]
+}

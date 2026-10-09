@@ -11,6 +11,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from build_resources import selected
+from resource_content import route
 from build import BOOKS, CATS, ORIGIN, ROOT, full_title, verification_tag
 
 PRIORITY = {'first-time-football-coach', 'season-planner', 'british-nostalgia',
@@ -23,6 +25,7 @@ class Page(HTMLParser):
         self.links, self.meta, self.ids = [], {}, set()
         self.title, self.canonical, self.h1 = '', '', ''
         self.capture = None
+        self.in_svg = False
         self.feed(source)
         self.schemas = [json.loads(s) for s in re.findall(r'<script type="application/ld\+json">(.*?)</script>', source)]
 
@@ -32,9 +35,11 @@ class Page(HTMLParser):
         if tag == 'a' and a.get('href'): self.links.append(a['href'])
         if tag == 'meta': self.meta[a.get('name', a.get('property'))] = a.get('content', '')
         if tag == 'link' and a.get('rel') == 'canonical': self.canonical = a['href']
-        if tag in ('title', 'h1'): self.capture = tag
+        if tag == 'svg': self.in_svg = True
+        if tag in ('title', 'h1') and not self.in_svg: self.capture = tag
 
     def handle_endtag(self, tag):
+        if tag == 'svg': self.in_svg = False
         if tag == self.capture: self.capture = None
 
     def handle_data(self, value):
@@ -58,6 +63,9 @@ def main():
             if parsed.scheme or parsed.netloc: continue
             target = (path.parent / parsed.path).resolve() if parsed.path else path
             if target.is_dir(): target /= 'index.html'
+            if target.suffix == '.pdf':
+                assert target.is_file(), (path, href)
+                continue
             assert target in pages, (path, href)
             if parsed.fragment: assert parsed.fragment in pages[target].ids, (path, href)
     reached, queue = set(), deque([ROOT / 'index.html'])
@@ -70,7 +78,7 @@ def main():
             if target.scheme or target.netloc: continue
             local = (current.parent / target.path).resolve() if target.path else current
             if local.is_dir(): local /= 'index.html'
-            queue.append(local)
+            if local in pages: queue.append(local)
     assert reached == set(pages), 'Orphan pages'
     for book in BOOKS:
         path = ROOT / 'books' / book['id'] / 'index.html'
@@ -107,21 +115,33 @@ def main():
             return subprocess.check_output(['git', 'show', baseline + ':' + path], cwd=ROOT)
         before = json.loads(old('catalogue/books.json'))
         assert len(before) == len(BOOKS) == 24
-        allowed = {'seoTitle', 'metaDescription', 'productDescription', 'features', 'companion'}
-        for previous, book in zip(before, BOOKS):
-            assert {k: v for k, v in previous.items() if k not in allowed} == {k: v for k, v in book.items() if k not in allowed}, book['id']
-            if book['id'] not in PRIORITY:
-                assert re.search(r'<body>.*</body>', old(f'books/{book["id"]}/index.html').decode(), re.S).group() == re.search(r'<body>.*</body>', (ROOT / f'books/{book["id"]}/index.html').read_text(), re.S).group()
-        for path in [ROOT/'styles.css', ROOT/'site.js', ROOT/'sitemap.xml', ROOT/'robots.txt', *ROOT.glob('assets/**/*.webp')]:
+        assert before == BOOKS, 'All catalogue metadata must remain exact'
+        assert (ROOT/'catalogue/search-console.json').read_bytes() == old('catalogue/search-console.json')
+        for path in [ROOT/'robots.txt', *ROOT.glob('assets/covers/*.webp'), *ROOT.glob('assets/previews/*.webp')]:
             assert path.read_bytes() == old(path.relative_to(ROOT).as_posix()), path
+        baseline_css=old('styles.css').decode()
+        assert (ROOT/'styles.css').read_text().startswith(baseline_css), 'Existing design CSS altered'
+        def protected(markup):
+            markup=re.sub(r'<a href="(?:../)*resources/">Resources</a>', '', markup)
+            markup=re.sub(r', "resource": null', '', markup)
+            markup=re.sub(r' fetchpriority="high"', '', markup)
+            markup=re.sub(r' srcset="[^"]+" sizes="[^"]+"', '', markup)
+            markup=re.sub(r'<section class="container section book-resources">.*?</section>', '', markup)
+            markup=markup.replace('book views, resource views, printable download clicks, related-book clicks, preview opens', 'book views, preview opens')
+            return markup
         for path in pages:
-            if path.parent.parent != ROOT / 'books':
-                current, previous = path.read_bytes(), old(path.relative_to(ROOT).as_posix())
-                if path == ROOT / 'index.html':
-                    pattern = rb'<meta name="google-site-verification" content="[A-Za-z0-9_-]+">'
-                    current, previous = re.sub(pattern, b'', current), re.sub(pattern, b'', previous)
-                assert current == previous, path
-        print('PASS: all 24 book identities, ASINs, Amazon destinations, previews, assets, CSS and tracking preserved; non-book pages preserved apart from optional homepage verification token')
+            if path.is_relative_to(ROOT/'resources'): continue
+            previous=old(path.relative_to(ROOT).as_posix()).decode()
+            assert protected(path.read_text())==previous, f'Protected HTML changed beyond declared nav/config/related links/cover hints/privacy additions: {path}'
+        print('PASS: all 24 catalogue records, ASINs, Amazon destinations, 78 original previews, original covers, verification token and base CSS exact; protected HTML unchanged outside declared additions')
+    for r in selected():
+        page=pages[ROOT/route(r)]
+        article,trail=page.schemas
+        assert article['@type']=='Article' and article['headline']==r['title']
+        assert article['author']=={'@type':'Organization','name':'K.D.Publishing editorial'}
+        assert article['url']==page.canonical and 'datePublished' not in article
+        assert trail['@type']=='BreadcrumbList' and [x['position'] for x in trail['itemListElement']]==[1,2,3,4]
+        assert trail['itemListElement'][-1]['item']==page.canonical
     print(f'PASS: {len(pages)} unique canonicals, titles and descriptions; all pages reachable; fragments valid; 24 Book and BreadcrumbList objects; optional verification hook')
     print('JSON syntax and expected schema fields validated locally. Google rich-result eligibility and indexed canonicals require external Google validation.')
 
