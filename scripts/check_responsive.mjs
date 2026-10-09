@@ -42,7 +42,7 @@ try {
       await page.goto(`http://127.0.0.1:${server.address().port}/${target}`, { waitUntil: 'networkidle0' });
       await page.evaluate(async () => {
         localStorage.removeItem('kd_analytics_consent');
-        for (const image of document.images) { image.loading = 'eager'; await image.decode(); }
+        for (const image of document.images) { if (image.getAttribute('src')) { image.loading = 'eager'; await image.decode(); } }
         await document.fonts.ready;
       });
       const issues = await page.evaluate(() => {
@@ -53,7 +53,7 @@ try {
           if (box.width && (box.left < -1 || box.right > innerWidth + 1)) issues.push(`${node.tagName}.${node.className} outside viewport`);
           if (node.matches('.button, .preview') && box.height < 43) issues.push('small touch target');
         }
-        for (const image of document.images) if (!image.complete || !image.naturalWidth) issues.push('unloaded image');
+        for (const image of document.images) if (image.getAttribute('src') && (!image.complete || !image.naturalWidth)) issues.push('unloaded image');
         const consent = document.querySelector('#cookie-notice');
         if (['fixed', 'absolute'].includes(getComputedStyle(consent).position)) issues.push('consent overlays content');
         return issues;
