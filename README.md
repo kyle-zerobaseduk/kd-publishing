@@ -64,3 +64,7 @@ The read-only PR workflow repeats the checks and measures the homepage/five prio
 Before release: owner approves the PR and five book descriptions; resolve Search Console access/verification through the exact project-scoped runbook; review the mobile measurement evidence and Google account settings that remain unknown. Do not merge or deploy without explicit approval. Independently check live Amazon pages in a supported session when available; automated Amazon client rejection alone is not evidence of a broken purchase link.
 
 No changes to the separate Pinterest automation repository are part of this project.
+
+## Phase 2B draft resources
+
+Six original resources and eight limited A4 free printables are developed for owner review in the Phase 2B branch. They are not deployed. Read [the implementation and controlled release instructions](docs/phase-2b-implementation.md). The earlier [Phase 2B architecture](docs/phase-2b-resources.md) records the Phase 2A planning checkpoint, not the current build state. Choose `all` or `priority` in `content/resource-release.json` before an approved release. Source content approval remains pending; no owner-approval flag is fabricated.

@@ -25,9 +25,9 @@ def sheet(name,title,slug,cluster):
  footer(c,slug,cluster)
  return c,y-10
 
-def para(c,text,y,size=11,width=None):
+def para(c,text,y,size=11,width=None,indent=0):
  c.setFont('Helvetica',size)
- for line in simpleSplit(text,'Helvetica',size,width or W-2*M):c.drawString(M,y,line);y-=size*1.35
+ for line in simpleSplit(text,'Helvetica',size,width or W-2*M-indent):c.drawString(M+indent,y,line);y-=size*1.35
  return y-7
 
 def heading(c,text,y):
@@ -83,7 +83,7 @@ def puzzle_pdf(name,title,data,slug,solution=False):
   for col,ch in enumerate(row):c.drawCentredString(left+(col+.5)*cell,top-(r+.5)*cell-7,ch)
  y=top-n*cell-24
  if solution:
-  c.setFont('Helvetica',10.5)
+  c.setFont('Helvetica',12)
   for i,p in enumerate(data['words']):
    col=i//6;line=i%6
    c.drawString(M+col*255,y-line*19,f"{p['label']}: ({p['start'][0]},{p['start'][1]}) to ({p['end'][0]},{p['end'][1]})")
@@ -107,15 +107,15 @@ y=para(c,'Five or six players (eight-player option). Focus: close control, findi
 y=heading(c,'Before children arrive',y)
 y=para(c,'Size 3 ball each + two spares; 16 flat cones; two-colour bibs; watch; water. Start with a 20 × 15 m training area, six 1 m gates and four cone goals. Check surface, footwear, covered shin pads, supervision and emergency arrangements.',y)
 for time,title,text in [('0–8','Arrival and ball warm-up','One ball each. Dribble, turn and stop. Gentle changes of speed; no laps or elimination.'),('8–20','Find a different gate','Everyone dribbles. Three short rounds; find a free gate. Widen gates or space if crowded.'),('20–23','Drink and demonstrate','Check comfort. Show the next game briefly; water is available throughout.'),('23–35','Keep it or share it','6: three pairs. 5: pair + trio. 8: four pairs. Pass or dribble through gates. Last 4 min optional opposition: 6 = two 2v1; 5 = 2v2 + helper; 8 = two 2v2. Rotate roles each minute.'),('35–38','Drink and reset','Keep four cone goals. Put spare balls with coach; supervise both areas if splitting.'),('38–55','Short games','5: 2v2 + rotating helper on team in possession. 6: 3v3. 8: two 2v2 games with adult support. Short bouts with recovery and role changes. Dribble through goals to score.'),('55–60','Slow finish and reflect','Gentle dribbling/walking. Ask: Where did you find space? Collect kit; agreed handover.')]:
- y=heading(c,time+' · '+title,y);y=para(c,text,y,10.5)
-y=para(c,'Cues: little touches in traffic; look for a free gate; move after passing. Shorten or simplify for fatigue, cold, distress or confusion. Stop for injury. No heading, fitness punishments or forced repeated sprints.',y,10.5)
+ y=heading(c,time+' · '+title,y);y=para(c,text,y,12)
+y=para(c,'Cues: little touches in traffic; look for a free gate; move after passing. Shorten or simplify for fatigue, cold, distress or confusion. Stop for injury. No heading, fitness punishments or forced repeated sprints.',y,12)
 y=para(c,'Original editorial training plan, not FA-endorsed or field-tested with your group. England U7 match format is 3v3; U8 is 5v5 (2026/27). Suggested areas/timings are not match requirements. Full source notes and adaptations on the webpage.',y,9)
 assert y>48,y;c.save()
 
 c,y=sheet('first-session-checklist','First U7/U8 session · checklist','first-u7-u8-training-session-checklist','football')
 for title,items in [('Before the day',['Confirm venue, time, surface, qualified support and club safeguarding / first-aid arrangements.','Tell families: named water, appropriate boots, covered shin pads and suitable clothing.','Check attendance, relevant needs privately, emergency contacts and collection procedure.','Pack a size 3 ball each, spares, flat cones, bibs and a watch.']),('Before play',['Walk the surface and run-off area; secure any portable goals.','Mark boundaries and a visible resting / drinking place. Count children in.','Assign adult duties for arrivals, late arrivals and any toilet / welfare needs.']),('A suggested first hour',['0–10: greet, learn names, free dribbling. 10–20: find a different gate.','20–25: drink and demonstrate. 25–35: pair / trio gate passing or dribbling.','35–40: drink and reset. 40–55: short 2v2 / 3v3 games.','55–60: reflect, collect kit and hand over using the club’s procedure.']),('During and after',['Show one action, give one cue and start. No heading practices.','Offer water / rest; simplify or stop for fatigue, cold, injury or distress.','Record one success, one difficulty and one next-session adjustment.'])]:
  y=heading(c,title,y)
- for text in items:c.rect(M,y-1,7,7);y=para(c,'     '+text,y,11)
+ for text in items:c.rect(M,y-1,7,7);y=para(c,text,y,11,indent=16)
 y=para(c,'England 2026/27: U7 entry match format 3v3; U8 5v5. This checklist suggests training organisation, not an official fixture or FA-endorsed plan. Verify local and national-association requirements.',y,10)
 y=heading(c,'Notes for next week',y)
 for i in range(3):c.line(M,y,W-M,y);y-=25
@@ -147,8 +147,8 @@ for label,rows in [('Six players · fewer changes',SIX),('Eight players · equal
  c.setFont('Helvetica',12)
  for start,end,on,off in rows:c.drawString(M,y,f'{start}–{end}');c.drawString(150,y,' '.join(on));c.drawString(390,y,' '.join(off));y-=21
  y-=6
- if rows==SIX:y=para(c,'A/B: 40 minutes; C/D/E/F: 30 each. Total 200. Rotate full-match roles at the next comparable fixture. Optional GK: A first half; B second.',y,10.5)
- else:y=para(c,'A–H: 25 minutes each. Total 200. Optional 10-minute GK turns: D, A, B, C in that order. Goalkeeper minutes count towards each total.',y,10.5)
+ if rows==SIX:y=para(c,'A/B: 40 minutes; C/D/E/F: 30 each. Total 200. Rotate full-match roles at the next comparable fixture. Optional GK: A first half; B second.',y,12)
+ else:y=para(c,'A–H: 25 minutes each. Total 200. Optional 10-minute GK turns: D, A, B, C in that order. Goalkeeper minutes count towards each total.',y,12)
 y=para(c,'The FA handbook recommends equal playing time where possible, at least 50% as best practice. Competition requirements must be checked. These tables are optional editorial plans, not FA-endorsed. A fixed full-game keeper changes the outfield-time arithmetic.',y,10)
 assert y>48,y;c.save()
 print('Generated 8 deterministic A4 PDFs and two unique puzzle grids')

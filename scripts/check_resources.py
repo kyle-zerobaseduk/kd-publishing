@@ -62,4 +62,11 @@ for pdf in (ROOT/'assets/resources').glob('*.pdf'):
  def bounds(t,cm,tm,font,size):
   if t.strip():assert 15<=tm[4]<=550 and 10<=tm[5]<=800,(pdf,t,tm)
  for p in reader.pages:p.extract_text(visitor_text=bounds)
-print('PASS: six developed drafts; 8 A4 PDFs; 24 unique forward word placements; printed grids and answer coordinates exact; 6/8-player rotation totals; PDF text bounds')
+for r in ALL_RESOURCES:
+ if r['slug'] in ('u8-small-squad-training-session','first-u7-u8-training-session-checklist'):
+  times=next(s['table']['rows'] for s in r['sections'] if s.get('table'))
+  windows=[tuple(map(int,re.match(r'(\d+)–(\d+)',row[0]).groups())) for row in times]
+  assert windows[0][0]==0 and windows[-1][1]==60
+  assert all(a[1]==b[0] for a,b in zip(windows,windows[1:]))
+  assert sum(b-a for a,b in windows)==60
+print(f'PASS: {len(selected())} selected developed drafts; {sum(len(r["downloads"]) for r in selected())} A4 PDFs; unique forward word placements, printed grids and answer coordinates exact; rotation totals; 60-minute schedules; PDF text bounds')
