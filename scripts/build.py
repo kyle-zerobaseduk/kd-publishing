@@ -13,6 +13,9 @@ BOOKS = json.loads((ROOT / 'catalogue/books.json').read_text())
 ORIGIN = os.environ.get('KD_SITE_URL', 'https://kyle-zerobaseduk.github.io/kd-publishing').rstrip('/')
 GA_ID = os.environ.get('KD_GA4_ID', 'G-64LMW6KFB7')
 SEARCH_CONSOLE_TOKEN = json.loads((ROOT / 'catalogue/search-console.json').read_text())['verificationToken']
+# Resolve presentation before main parses; reads a preference only, never activates GA.
+CONSENT_BOOTSTRAP = '<script>(()=>{const c=JSON.parse(document.getElementById("site-config").textContent);if(!/^G-[A-Z0-9]+$/.test(c.ga4))return;let v;try{v=localStorage.getItem("kd_analytics_consent");}catch{}if(v!=="yes"&&v!=="no")document.getElementById("cookie-notice").hidden=false;})();</script>'
+
 CATS = {
     'puzzles': ('Word Search & Puzzle Books', 'Find a puzzle for a quiet moment, a favourite subject or a thoughtful gift.'),
     'colouring': ('Colouring & Activity Books', 'Detailed scenes and creative places to make your own.'),
@@ -102,7 +105,8 @@ def cover(book, pre, loading='lazy'):
     image = ROOT / image_path
     if image.exists():
         width, height = webp_size(image)
-        return f'<img src="{pre}{image_path}" alt="Front cover of {e(short_title(book))}" width="{width}" height="{height}" loading="{loading}">'
+        responsive = (f' srcset="{pre}assets/responsive/british-nostalgia-440.webp 440w, {pre}{image_path} {width}w" sizes="(max-width: 600px) 65vw, (max-width: 800px) 35vw, 32vw"' if book['id'] == 'british-nostalgia' else '')
+        return f'<img{responsive} src="{pre}{image_path}" alt="Front cover of {e(short_title(book))}" width="{width}" height="{height}" loading="{loading}"{(' fetchpriority="high"' if loading == 'eager' else '')}>'
     return f'<div class="cover-pending" role="img" aria-label="Cover artwork pending for {e(short_title(book))}"><span>K.D.PUBLISHING</span><strong>{e(short_title(book))}</strong><small>Cover image pending</small></div>'
 
 
@@ -119,25 +123,26 @@ def cards(books, pre, heading=3):
     return f'<div class="book-grid{layout}">' + ''.join(card(b, pre, heading) for b in books) + '</div>'
 
 
-def shell(path, title, description, main, image=None, book=None):
+def shell(path, title, description, main, image=None, book=None, resource=None, extra_structured=''):
     pre = prefix(path)
     canonical = f'<link rel="canonical" href="{e(url(path))}">' if ORIGIN else ''
     ogurl = f'<meta property="og:url" content="{e(url(path))}">' if ORIGIN else ''
     ogimage = f'<meta property="og:image" content="{e(url(image) if ORIGIN else pre + image)}">' if image else ''
     structured = ''
+    structured += extra_structured
     if book:
-        structured = book_markup(book, path, image)
+        structured += book_markup(book, path, image)
     nav = f'''<header class="header"><div class="container header-inner"><a class="brand" href="{pre}" aria-label="K.D.Publishing home"><span class="brand-mark">K<span>.</span>D<span>.</span></span><span class="brand-type">PUBLISHING</span></a>
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation"><span></span><span></span><span></span></button>
-      <nav id="primary-nav" class="nav" aria-label="Primary"><a href="{pre}">Home</a><div class="nav-group"><a href="{pre}books/">Books</a><button class="submenu-toggle" type="button" aria-expanded="false" aria-controls="book-categories" aria-label="Show book categories">⌄</button><div class="submenu" id="book-categories">{''.join(f'<a href="{pre}categories/{key}/">{e(label)}</a>' for key,(label,_) in CATS.items())}</div></div><a href="{pre}latest/">Latest releases</a><a href="{pre}about/">About</a><a href="{pre}contact/">Contact</a></nav></div></header>'''
+      <nav id="primary-nav" class="nav" aria-label="Primary"><a href="{pre}">Home</a><div class="nav-group"><a href="{pre}books/">Books</a><button class="submenu-toggle" type="button" aria-expanded="false" aria-controls="book-categories" aria-label="Show book categories">⌄</button><div class="submenu" id="book-categories">{''.join(f'<a href="{pre}categories/{key}/">{e(label)}</a>' for key,(label,_) in CATS.items())}</div></div><a href="{pre}latest/">Latest releases</a><a href="{pre}resources/">Resources</a><a href="{pre}about/">About</a><a href="{pre}contact/">Contact</a></nav></div></header>'''
     current_href = pre + path.removesuffix('index.html')
     if path == 'index.html':
         current_href = pre
     nav = nav.replace(f'href="{current_href}"', f'href="{current_href}" aria-current="page"')
     footer = f'''<footer class="footer"><div class="container footer-inner"><div><a class="footer-brand" href="{pre}">K.D.PUBLISHING</a><p>Books for curiosity, creativity and everyday life.</p></div><div><a href="{pre}books/">All books</a><a href="{pre}about/">About</a><a href="{pre}contact/">Contact</a><a href="{pre}privacy/">Privacy & analytics</a></div><small>© {date.today().year} K.D.Publishing</small></div></footer>'''
     consent = '<aside class="cookie-notice" id="cookie-notice" aria-label="Optional analytics" hidden><div class="container consent-inner"><p>May we use optional analytics to understand which books and previews people view? <a href="'+pre+'privacy/">Privacy details</a></p><div class="consent-actions"><button class="button button-secondary button-small" type="button" data-consent="reject">No thanks</button><button type="button" class="button button-small" data-consent="accept">Allow analytics</button></div></div></aside>'
-    config = json.dumps({'ga4':GA_ID,'book':({'id':book['id'],'title':short_title(book),'category':book['category'],'asin':book['asin']} if book else None)}).replace('<','\\u003c')
-    out = f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>{e(title)} | K.D.Publishing</title><meta name="description" content="{e(description)}">{canonical}<meta property="og:type" content="{'book' if book else 'website'}"><meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(description)}">{ogurl}{ogimage}<meta name="twitter:card" content="summary_large_image"><link rel="stylesheet" href="{pre}styles.css"><script type="application/json" id="site-config">{config}</script><script defer src="{pre}site.js"></script>{structured}{verification_tag(path)}</head><body><a class="skip-link" href="#main">Skip to content</a>{nav}{consent}<main id="main">{main}</main>{footer}</body></html>'''
+    config = json.dumps({'ga4':GA_ID,'book':({'id':book['id'],'title':short_title(book),'category':book['category'],'asin':book['asin']} if book else None), 'resource':resource}).replace('<','\\u003c')
+    out = f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>{e(title)} | K.D.Publishing</title><meta name="description" content="{e(description)}">{canonical}<meta property="og:type" content="{'book' if book else 'website'}"><meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(description)}">{ogurl}{ogimage}<meta name="twitter:card" content="summary_large_image"><link rel="stylesheet" href="{pre}styles.css"><script type="application/json" id="site-config">{config}</script><script defer src="{pre}site.js"></script>{structured}{verification_tag(path)}</head><body><a class="skip-link" href="#main">Skip to content</a>{nav}{consent}{CONSENT_BOOTSTRAP}<main id="main" tabindex="-1">{main}</main>{footer}</body></html>'''
     destination = ROOT / path
     destination.parent.mkdir(parents=True,exist_ok=True)
     destination.write_text(out,encoding='utf-8')
@@ -171,6 +176,7 @@ def catalogue():
 
 
 def products():
+    from build_resources import book_resources
     for b in BOOKS:
         pre='../../';name=short_title(b); image=b.get('coverImage') or (f'assets/covers/{b["id"]}.webp' if b['coverSource'] else None)
         amazon_url=b.get('amazonUrl') or f'https://www.amazon.co.uk/dp/{b["asin"]}'
@@ -186,6 +192,7 @@ def products():
         related=[x for x in BOOKS if x['category']==b['category'] and x['id']!=b['id']][:3]
         related_section = f'''<section class="section container"><div class="section-heading"><div><span class="eyebrow">Keep exploring</span><h2>More from this shelf</h2></div><a class="text-link" href="{pre}categories/{b['category']}/">View category <span aria-hidden="true">↗</span></a></div>{cards(related,pre)}</section>''' if related else ''
         main=f'''<section class="container product"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{pre}">Home</a> / <a href="{pre}categories/{b['category']}/">{e(CATS[b['category']][0])}</a> / <span>{e(name)}</span></nav><div class="product-grid"><div class="product-cover">{cover(b,pre,'eager')}</div><div class="product-info"><span class="eyebrow">{e(CATS[b['category']][0])} {'· In review' if b['status']!='live' else ''}</span><h1>{e(b['title'])}</h1>{subtitle}<p class="lead">{e(b.get('productDescription', b['description']))}</p><div class="purchase" id="purchase"><div class="product-actions">{purchase}<a class="button button-secondary" href="#inside">Look inside <span aria-hidden="true">↓</span></a></div>{purchase_note}</div><div class="product-details">{details}</div>{specs}</div></div></section><section class="section section-tint" id="inside"><div class="container"><div class="section-heading"><div><span class="eyebrow">Actual book pages</span><h2>Look inside</h2></div><p>Reduced-size samples from the finished interior. Tap a page for a closer look.</p></div><div class="preview-grid">{samples}</div></div></section>{related_section}<dialog class="preview-dialog" aria-label="Enlarged interior preview"><button type="button" class="dialog-close" aria-label="Close preview">Close ×</button><img alt="Enlarged book interior sample"><p></p></dialog>'''
+        main += book_resources(b["id"], pre)
         shell(f'books/{b["id"]}/index.html', b.get('seoTitle', full_title(b)), b.get('metaDescription', b['description']+' See actual interior pages and book information.'), main, image, b)
 
 
@@ -200,10 +207,12 @@ def simple():
       <section class="contact-card" aria-labelledby="privacy-choices"><span class="eyebrow">Your choices</span><h2 id="privacy-choices">Privacy &amp; analytics</h2><p>You can browse our books and previews whether you allow optional analytics or decline.</p><p>Our privacy page explains how analytics and Amazon links work. You can also change your analytics choice there.</p><a class="button button-dark" href="../privacy/">Privacy &amp; analytics</a></section>
     </div>'''
     shell('contact/index.html','Contact','How to get in touch with K.D.Publishing.',contact)
-    shell('privacy/index.html','Privacy & analytics','Learn how optional website analytics and Amazon links work on K.D.Publishing.',titleblock('Your choices','Privacy & analytics','How we measure interest in our books.')+'''<section class="container prose section"><h2>Optional analytics</h2><p>Google Analytics 4 is configured, but it does not load until you choose “Allow analytics”. If enabled, Google may set analytics cookies and receive page URLs, referrers, campaign tags, book identifiers and interaction events, including page views, book views, preview opens and outbound Amazon-button clicks. You can decline and still use every part of the site.</p><p>A decision is stored in your browser so the choice remains in effect. You can change it below. Measurement cannot prove that a purchase occurred on Amazon.</p><button class="button button-dark" type="button" id="reset-consent">Change analytics choice</button><h2>Amazon links</h2><p>Clicking “Buy on Amazon UK” opens Amazon in a new tab. Amazon handles its own site, checkout and privacy choices. This website does not collect payment details.</p></section>''')
+    shell('privacy/index.html','Privacy & analytics','Learn how optional website analytics and Amazon links work on K.D.Publishing.',titleblock('Your choices','Privacy & analytics','How we measure interest in our books.')+'''<section class="container prose section"><h2>Optional analytics</h2><p>Google Analytics 4 is configured, but it does not load until you choose “Allow analytics”. If enabled, Google may set analytics cookies and receive page URLs, referrers, campaign tags, book identifiers and interaction events, including page views, book views, resource views, printable download clicks, related-book clicks, preview opens and outbound Amazon-button clicks. You can decline and still use every part of the site.</p><p>A decision is stored in your browser so the choice remains in effect. You can change it below. Measurement cannot prove that a purchase occurred on Amazon.</p><button class="button button-dark" type="button" id="reset-consent">Change analytics choice</button><h2>Amazon links</h2><p>Clicking “Buy on Amazon UK” opens Amazon in a new tab. Amazon handles its own site, checkout and privacy choices. This website does not collect payment details.</p></section>''')
     (ROOT/'robots.txt').write_text('User-agent: *\nAllow: /\n'+(f'Sitemap: {ORIGIN}/sitemap.xml\n' if ORIGIN else ''),encoding='utf-8')
+    from build_resources import build_resources
+    resource_paths = build_resources()
     if ORIGIN:
-        paths=['index.html','books/index.html','latest/index.html','about/index.html','contact/index.html','privacy/index.html']+[f'categories/{k}/index.html' for k in CATS]+[f'books/{b["id"]}/index.html' for b in BOOKS]
+        paths=['index.html','books/index.html','latest/index.html','about/index.html','contact/index.html','privacy/index.html']+[f'categories/{k}/index.html' for k in CATS]+[f'books/{b["id"]}/index.html' for b in BOOKS]+resource_paths
         (ROOT/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join(f'<url><loc>{e(url(p.replace("index.html","")))}</loc></url>' for p in paths)+'</urlset>',encoding='utf-8')
 
 

@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from PIL import Image
+from build_resources import selected
 from build import GA_ID, ORIGIN as PRODUCTION_URL
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +21,7 @@ class Inspect(HTMLParser):
         self.images = []
         self.h1 = 0
         self.title = 0
+        self.in_svg = False
         self.description = 0
         self.amazon = []
         self.amazon_buttons = []
@@ -30,7 +32,8 @@ class Inspect(HTMLParser):
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
         if tag == 'h1': self.h1 += 1
-        if tag == 'title': self.title += 1
+        if tag == 'svg': self.in_svg = True
+        if tag == 'title' and not self.in_svg: self.title += 1
         if tag == 'meta' and a.get('name') == 'description': self.description += 1
         if tag == 'meta' and a.get('property') == 'og:url': self.og_urls.append(a.get('content'))
         if tag == 'meta' and a.get('property') == 'og:image': self.og_images.append(a.get('content'))
@@ -44,6 +47,8 @@ class Inspect(HTMLParser):
         if tag == 'button' and 'data-preview' in a:
             self.images.append({'src': a['data-preview'], 'alt': 'Preview button'})
 
+    def handle_endtag(self, tag):
+        if tag == 'svg': self.in_svg = False
 
 def check():
     assert len({b['id'] for b in books}) == len(books)
@@ -55,7 +60,7 @@ def check():
     assert all(urlsplit(b['amazonUrl']).scheme == 'https' and urlsplit(b['amazonUrl']).hostname in ('www.amazon.co.uk', 'amzn.eu') for b in books if b.get('amazonUrl'))
     all_pages = list(ROOT.rglob('index.html'))
     category_count = len({b['category'] for b in books})
-    assert len(all_pages) == len(books) + category_count + 6, len(all_pages)
+    assert len(all_pages) == len(books) + category_count + 6 + 4 + len(selected()), len(all_pages)
     for page in all_pages:
         markup = page.read_text()
         parsed = Inspect(); parsed.feed(markup)
@@ -88,9 +93,13 @@ def check():
                 assert (button.get('data-book-id'), button.get('data-asin')) == (b['id'], b['asin']), b['id']
                 assert button.get('href') == parsed.amazon[0] and button.get('target') == '_blank', b['id']
             assert len([x for x in parsed.images if '/previews/' in x.get('src','') and x['alt'] != 'Preview button']) == len(b['previewPages'])
-    assert not list(ROOT.rglob('*.pdf')) and not list(ROOT.rglob('*.zip'))
+    allowed_pdfs = {ROOT / d['path'] for r in __import__('resource_content').ALL_RESOURCES for d in r['downloads']}
+    assert set(ROOT.rglob('*.pdf')) <= allowed_pdfs and not list(ROOT.rglob('*.zip'))
     for asset in (ROOT/'assets').rglob('*'):
         if not asset.is_file(): continue
+        if asset in allowed_pdfs:
+            assert asset.stat().st_size < 100_000
+            continue
         assert asset.suffix == '.webp' and asset.stat().st_size < 500_000, asset
         with Image.open(asset) as image:
             assert max(image.size) <= 1300 and image.width <= 850, asset
