@@ -122,6 +122,7 @@ def main():
         baseline_css=old('styles.css').decode()
         assert (ROOT/'styles.css').read_text().startswith(baseline_css), 'Existing design CSS altered'
         def protected(markup):
+            markup=markup.replace('<main id="main" tabindex="-1">', '<main id="main">')
             markup=re.sub(r'<a href="(?:../)*resources/">Resources</a>', '', markup)
             markup=re.sub(r', "resource": null', '', markup)
             markup=re.sub(r' fetchpriority="high"', '', markup)

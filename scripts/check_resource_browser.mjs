@@ -36,7 +36,7 @@ try{
    a11y.push({target:target||'/',width,violations:report.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>n.target)}))});
    assert.equal(report.violations.length,0,JSON.stringify(a11y.at(-1)));
    // Keyboard focus: first Tab reaches the skip link with a visible outline.
-   await page.evaluate(()=>document.activeElement?.blur());await page.keyboard.press('Tab');
+   await page.reload({waitUntil:'networkidle0'});await page.keyboard.press('Tab');
    const focus=await page.evaluate(()=>{const e=document.activeElement,s=getComputedStyle(e);return {name:e.className,outline:s.outlineStyle};});
    assert.equal(focus.name,'skip-link');assert.notEqual(focus.outline,'none');
    await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>document.activeElement.id),'main');
