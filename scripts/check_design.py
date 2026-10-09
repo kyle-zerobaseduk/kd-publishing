@@ -92,7 +92,7 @@ def main():
             h1 = next(n for n in tree.nodes if n.tag == 'h1')
             assert h1.content() == book['title'], file
             lead = next(n for n in tree.nodes if n.attrs.get('class') == 'lead')
-            assert lead.content() == book['description'], file
+            assert lead.content() == book.get('productDescription', book['description']), file
             subtitles = [n for n in tree.nodes if n.attrs.get('class') == 'product-subtitle']
             assert [n.content() for n in subtitles] == ([book['subtitle']] if book.get('subtitle') else []), file
         if baseline:

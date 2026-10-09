@@ -17,13 +17,13 @@ Static files require no paid hosting or runtime service. The verified production
 
 `i-deleted-the-honest-version` adds the Humour & Gift Books collection. `british-nostalgia` updates the existing in-review record to live. KDP Bookshelf screenshots dated 4 October confirm ASINs `B0HLSTBBL9` and `B0HLSNSY9N`. The owner supplied UK Share links `https://amzn.eu/d/0cXanCA3` (Honest Version) and `https://amzn.eu/d/0flnKdY0` (British Nostalgia). Their HTTP redirects were matched to the confirmed ASINs on amazon.co.uk; both purchase buttons are enabled and use these exact Share links. Amazon rejects the automated session after the redirect, so the final product-page rendering could not be independently checked.
 
-Only these two records use the optional `features`, `giftNote`, `publisher`, `format`, `coverSize` and `coverTrim` fields. `coverTrim` specifies front-cover trim width/height in PDF points, excluding the wrap's 9-point bleed. `catalogueAdded` records the date the live title was added to the website, for recent-release ordering when the publication date is unverified; it is not a publication-date claim.
+Priority records can use the optional `features`, `giftNote`, `publisher`, `format`, `coverSize` and `coverTrim` fields. `coverTrim` specifies front-cover trim width/height in PDF points, excluding the wrap's 9-point bleed. `catalogueAdded` records the date the live title was added to the website, for recent-release ordering when the publication date is unverified; it is not a publication-date claim.
 
 The new front-cover derivatives use the supplied final approved PDFs. Four workplace-humour samples use pages 5, 8, 14 and 55 of the supplied 62-page interior candidate. Existing British Nostalgia samples are retained. Source PDFs and listing screenshots stay outside the public repository. No prices, publication dates or book page counts are added to customer-facing pages.
 
 ## Analytics
 
-**Configured stream: `G-64LMW6KFB7`.** The builder embeds this genuine GA4 Web Stream Measurement ID into each page by default. `KD_GA4_ID` remains an optional build-time override. This does not load Google Analytics until the visitor opts in. The Google-side Enhanced measurement setting should be **off**: this site sends its own page views, preview and Amazon events, so automatic page-view and outbound-click events are unnecessary. Do not paste a second Google tag or add Google Tag Manager. Check a consented test visit in GA4 Realtime before treating data collection as verified. Preview testing with the same ID can mix preview traffic into production reports; identify those test visits by their preview hostname or exclude them in reporting.
+**Configured stream: `G-64LMW6KFB7`.** The builder embeds this genuine GA4 Web Stream Measurement ID into each page by default. `KD_GA4_ID` remains an optional build-time override. This does not load Google Analytics until the visitor opts in. The site sends its own page views, preview and Amazon events. Read the Google-side Enhanced measurement settings and check for actual duplication before proposing an account change; do not switch off all enhanced features blindly. Do not paste a second Google tag or add Google Tag Manager. Check a consented test visit in GA4 Realtime before treating data collection as verified. Preview testing with the same ID can mix preview traffic into production reports; identify those test visits by their preview hostname or exclude them in reporting.
 
 The site shows an opt-in choice and **does not load Google Analytics or store campaign parameters before consent**. The browser stores the choice; the privacy page lets visitors reopen it and clears this site's GA cookies when the choice is reset. Setting `KD_GA4_ID=''` for a test build disables GA requests entirely. People who decline are not measured.
 
@@ -42,14 +42,25 @@ In GA4, use the Realtime report to confirm events; use Reports → Acquisition f
 
 The event's `book_title` uses the concise `shortTitle` from the same catalogue record; the full title stays on the product page. This keeps the event value within GA4's 100-character parameter limit. Use stable `book_id` as the reporting key when titles change.
 
-## Release checks still required
+## Phase 2A SEO foundation (9 October 2026)
 
-- Confirm a consented event in the intended GA4 property and verify that Google-side Enhanced measurement will not duplicate page views or outbound clicks. The production URL and genuine Measurement ID are configured in this branch; main is not deployed from the rebuild yet.
-- Confirm a public contact address or contact form endpoint. The contact page currently says details are pending.
-- Independently open all 22 Amazon destinations in a normal supported browser and compare the titles and ASINs. The Season Planner's owner-supplied Share link redirects to an Amazon UK `/dp/B0HJ6HGVC4` URL with share parameters; the owner confirmed the matching listing. Amazon rejects automated product-page sessions, so the full page could not be independently rendered here.
-- Check the four journal cover placeholders (Calm, Self-Care, Gratitude and Mindfulness) against the live KDP versions before replacing them. No final approved files were identified for these covers.
-- Confirm the High Fantasy Realms cover correction is complete before promoting that source as final. The available `HFR_KDP_COVER_FINAL.pdf` predates the requested removal of a dark lower band.
-- Recheck the latest KDP status of British Nostalgia. It was in review and had no ASIN in the supplied screenshot; it has no purchase button.
-- Inspect desktop and mobile rendering in a real browser. The local browser binary and cloud-to-local preview were unavailable in this execution environment. Structural/link/asset and simulated browser-script checks passed, but this visual gate is outstanding.
+The dedicated SEO PR preserves the approved PR #5 appearance, all 24 books/ASINs/Amazon destinations, 78 previews, consent and tracking. It provides concise search titles, evidence-based descriptions for the five priority books, richer Book metadata, breadcrumb markup and an optional owner-supplied Search Console tag. The tag setting is empty until an exact Google token is supplied and an approved deployment makes it live.
+
+Read [the implementation and claim evidence](docs/phase-2a-seo.md), [measurement and growth runbook](docs/measurement-and-growth-plan.md) and [unpublished resources architecture](docs/phase-2b-resources.md). Private analytics figures and KDP exports are kept outside this public repository. No resource article or download is published by the build.
+
+Run these checks from the repository root:
+
+```sh
+python3 scripts/build.py
+python3 scripts/check_site.py
+node scripts/test_tracking.js
+python3 scripts/check_design.py
+python3 scripts/check_seo.py --baseline-ref origin/main
+python3 scripts/test_resource_template.py
+```
+
+The read-only PR workflow repeats the checks and measures the homepage/five priority books against the base commit with Lighthouse 13.5.0 on a standard public-repository runner. Mobile reports are local lab measurements, not production Core Web Vitals. Measurement summaries and screenshots are recorded in job logs; no paid runner, storage artifact, deployment, Google write or marketing automation is used.
+
+Before release: owner approves the PR and five book descriptions; resolve Search Console access/verification through the exact project-scoped runbook; review the mobile measurement evidence and Google account settings that remain unknown. Do not merge or deploy without explicit approval. Independently check live Amazon pages in a supported session when available; automated Amazon client rejection alone is not evidence of a broken purchase link.
 
 No changes to the separate Pinterest automation repository are part of this project.
