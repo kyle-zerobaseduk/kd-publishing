@@ -2,6 +2,7 @@
 import html
 import json
 import os
+import re
 from datetime import date
 from functools import cache
 from pathlib import Path
@@ -11,6 +12,7 @@ BOOKS = json.loads((ROOT / 'catalogue/books.json').read_text())
 # Verified GitHub Pages production address. Override only when the live domain changes.
 ORIGIN = os.environ.get('KD_SITE_URL', 'https://kyle-zerobaseduk.github.io/kd-publishing').rstrip('/')
 GA_ID = os.environ.get('KD_GA4_ID', 'G-64LMW6KFB7')
+SEARCH_CONSOLE_TOKEN = json.loads((ROOT / 'catalogue/search-console.json').read_text())['verificationToken']
 CATS = {
     'puzzles': ('Word Search & Puzzle Books', 'Find a puzzle for a quiet moment, a favourite subject or a thoughtful gift.'),
     'colouring': ('Colouring & Activity Books', 'Detailed scenes and creative places to make your own.'),
@@ -36,6 +38,37 @@ def prefix(path):
 
 def url(path):
     return f'{ORIGIN}/{path.removesuffix("index.html")}' if ORIGIN else ''
+
+
+def verification_tag(path, token=SEARCH_CONSOLE_TOKEN):
+    """Optional, owner-supplied URL-prefix verification; never emit a placeholder."""
+    if not isinstance(token, str) or (token and not re.fullmatch(r'[A-Za-z0-9_-]+', token)):
+        raise ValueError('Search Console verificationToken must be the content value from Google, not an HTML tag')
+    return f'<meta name="google-site-verification" content="{e(token)}">' if token and path == 'index.html' else ''
+
+
+def book_markup(book, path, image):
+    """Describe the actual edition and the existing visible breadcrumb trail."""
+    data = {'@context': 'https://schema.org', '@type': 'Book', 'name': full_title(book),
+            'author': {'@type': 'Person', 'name': 'Kyle Dyer'},
+            'description': book.get('productDescription', book['description']),
+            'bookFormat': 'https://schema.org/Paperback', 'inLanguage': 'en-GB'}
+    if book.get('publisher'):
+        data['publisher'] = {'@type': 'Organization', 'name': book['publisher']}
+    if book['asin']:
+        data['identifier'] = {'@type': 'PropertyValue', 'propertyID': 'ASIN', 'value': book['asin']}
+    items = [data]
+    if ORIGIN:
+        data['@id'] = url(path) + '#book'
+        data['url'] = url(path)
+        if image:
+            data['image'] = url(image)
+        crumbs = [('Home', url('')), (CATS[book['category']][0], url(f'categories/{book["category"]}/')),
+                  (short_title(book), url(path))]
+        items.append({'@context': 'https://schema.org', '@type': 'BreadcrumbList',
+                      'itemListElement': [{'@type': 'ListItem', 'position': i, 'name': name, 'item': link}
+                                          for i, (name, link) in enumerate(crumbs, 1)]})
+    return ''.join('<script type="application/ld+json">' + json.dumps(item, ensure_ascii=False).replace('<', '\\u003c') + '</script>' for item in items)
 
 
 @cache
@@ -93,12 +126,7 @@ def shell(path, title, description, main, image=None, book=None):
     ogimage = f'<meta property="og:image" content="{e(url(image) if ORIGIN else pre + image)}">' if image else ''
     structured = ''
     if book:
-        data = {'@context':'https://schema.org','@type':'Book','name':full_title(book),'author':{'@type':'Person','name':'Kyle Dyer'}}
-        if ORIGIN:
-            data['url'] = url(path)
-        if book['asin']:
-            data['identifier'] = {'@type':'PropertyValue','propertyID':'ASIN','value':book['asin']}
-        structured = '<script type="application/ld+json">' + json.dumps(data,ensure_ascii=False).replace('<','\\u003c') + '</script>'
+        structured = book_markup(book, path, image)
     nav = f'''<header class="header"><div class="container header-inner"><a class="brand" href="{pre}" aria-label="K.D.Publishing home"><span class="brand-mark">K<span>.</span>D<span>.</span></span><span class="brand-type">PUBLISHING</span></a>
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation"><span></span><span></span><span></span></button>
       <nav id="primary-nav" class="nav" aria-label="Primary"><a href="{pre}">Home</a><div class="nav-group"><a href="{pre}books/">Books</a><button class="submenu-toggle" type="button" aria-expanded="false" aria-controls="book-categories" aria-label="Show book categories">⌄</button><div class="submenu" id="book-categories">{''.join(f'<a href="{pre}categories/{key}/">{e(label)}</a>' for key,(label,_) in CATS.items())}</div></div><a href="{pre}latest/">Latest releases</a><a href="{pre}about/">About</a><a href="{pre}contact/">Contact</a></nav></div></header>'''
@@ -109,7 +137,7 @@ def shell(path, title, description, main, image=None, book=None):
     footer = f'''<footer class="footer"><div class="container footer-inner"><div><a class="footer-brand" href="{pre}">K.D.PUBLISHING</a><p>Books for curiosity, creativity and everyday life.</p></div><div><a href="{pre}books/">All books</a><a href="{pre}about/">About</a><a href="{pre}contact/">Contact</a><a href="{pre}privacy/">Privacy & analytics</a></div><small>© {date.today().year} K.D.Publishing</small></div></footer>'''
     consent = '<aside class="cookie-notice" id="cookie-notice" aria-label="Optional analytics" hidden><div class="container consent-inner"><p>May we use optional analytics to understand which books and previews people view? <a href="'+pre+'privacy/">Privacy details</a></p><div class="consent-actions"><button class="button button-secondary button-small" type="button" data-consent="reject">No thanks</button><button type="button" class="button button-small" data-consent="accept">Allow analytics</button></div></div></aside>'
     config = json.dumps({'ga4':GA_ID,'book':({'id':book['id'],'title':short_title(book),'category':book['category'],'asin':book['asin']} if book else None)}).replace('<','\\u003c')
-    out = f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>{e(title)} | K.D.Publishing</title><meta name="description" content="{e(description)}">{canonical}<meta property="og:type" content="{'book' if book else 'website'}"><meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(description)}">{ogurl}{ogimage}<meta name="twitter:card" content="summary_large_image"><link rel="stylesheet" href="{pre}styles.css"><script type="application/json" id="site-config">{config}</script><script defer src="{pre}site.js"></script>{structured}</head><body><a class="skip-link" href="#main">Skip to content</a>{nav}{consent}<main id="main">{main}</main>{footer}</body></html>'''
+    out = f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>{e(title)} | K.D.Publishing</title><meta name="description" content="{e(description)}">{canonical}<meta property="og:type" content="{'book' if book else 'website'}"><meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(description)}">{ogurl}{ogimage}<meta name="twitter:card" content="summary_large_image"><link rel="stylesheet" href="{pre}styles.css"><script type="application/json" id="site-config">{config}</script><script defer src="{pre}site.js"></script>{structured}{verification_tag(path)}</head><body><a class="skip-link" href="#main">Skip to content</a>{nav}{consent}<main id="main">{main}</main>{footer}</body></html>'''
     destination = ROOT / path
     destination.parent.mkdir(parents=True,exist_ok=True)
     destination.write_text(out,encoding='utf-8')
@@ -150,12 +178,15 @@ def products():
         purchase_note = '<small>Amazon handles your order. Prices and availability may change there.</small>' if b['status']=='live' and b.get('amazonLinkEnabled',True) else ''
         specs=f'<dl class="facts"><div><dt>Format</dt><dd>{e(b.get("format","Paperback"))}</dd></div><div><dt>Author</dt><dd>Kyle Dyer</dd></div><div><dt>Collection</dt><dd>{e(CATS[b["category"]][0])}</dd></div>'+(f'<div><dt>Publisher</dt><dd>{e(b["publisher"])}</dd></div>' if b.get('publisher') else '')+(f'<div><dt>ASIN</dt><dd>{b["asin"]}</dd></div>' if b['asin'] else '')+'</dl>'
         details=('<ul>'+''.join(f'<li>{e(feature)}</li>' for feature in b['features'])+'</ul>' if b.get('features') else '')+(f'<p>{e(b["giftNote"])}</p>' if b.get('giftNote') else '')
+        if b.get('companion'):
+            companion = next(x for x in BOOKS if x['id'] == b['companion']['id'])
+            details += f'<p>{e(b["companion"]["text"])} <a href="../{e(companion["id"])}/">{e(short_title(companion))}</a>.</p>'
         subtitle = f'<p class="product-subtitle">{e(b["subtitle"])}</p>' if b.get('subtitle') else ''
         samples=''.join(preview(b, pre, page) for page in b['previewPages'])
         related=[x for x in BOOKS if x['category']==b['category'] and x['id']!=b['id']][:3]
         related_section = f'''<section class="section container"><div class="section-heading"><div><span class="eyebrow">Keep exploring</span><h2>More from this shelf</h2></div><a class="text-link" href="{pre}categories/{b['category']}/">View category <span aria-hidden="true">↗</span></a></div>{cards(related,pre)}</section>''' if related else ''
-        main=f'''<section class="container product"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{pre}">Home</a> / <a href="{pre}categories/{b['category']}/">{e(CATS[b['category']][0])}</a> / <span>{e(name)}</span></nav><div class="product-grid"><div class="product-cover">{cover(b,pre,'eager')}</div><div class="product-info"><span class="eyebrow">{e(CATS[b['category']][0])} {'· In review' if b['status']!='live' else ''}</span><h1>{e(b['title'])}</h1>{subtitle}<p class="lead">{e(b['description'])}</p><div class="purchase" id="purchase"><div class="product-actions">{purchase}<a class="button button-secondary" href="#inside">Look inside <span aria-hidden="true">↓</span></a></div>{purchase_note}</div><div class="product-details">{details}</div>{specs}</div></div></section><section class="section section-tint" id="inside"><div class="container"><div class="section-heading"><div><span class="eyebrow">Actual book pages</span><h2>Look inside</h2></div><p>Reduced-size samples from the finished interior. Tap a page for a closer look.</p></div><div class="preview-grid">{samples}</div></div></section>{related_section}<dialog class="preview-dialog" aria-label="Enlarged interior preview"><button type="button" class="dialog-close" aria-label="Close preview">Close ×</button><img alt="Enlarged book interior sample"><p></p></dialog>'''
-        shell(f'books/{b["id"]}/index.html',full_title(b),b['description']+' See actual interior pages and book information.',main,image,b)
+        main=f'''<section class="container product"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{pre}">Home</a> / <a href="{pre}categories/{b['category']}/">{e(CATS[b['category']][0])}</a> / <span>{e(name)}</span></nav><div class="product-grid"><div class="product-cover">{cover(b,pre,'eager')}</div><div class="product-info"><span class="eyebrow">{e(CATS[b['category']][0])} {'· In review' if b['status']!='live' else ''}</span><h1>{e(b['title'])}</h1>{subtitle}<p class="lead">{e(b.get('productDescription', b['description']))}</p><div class="purchase" id="purchase"><div class="product-actions">{purchase}<a class="button button-secondary" href="#inside">Look inside <span aria-hidden="true">↓</span></a></div>{purchase_note}</div><div class="product-details">{details}</div>{specs}</div></div></section><section class="section section-tint" id="inside"><div class="container"><div class="section-heading"><div><span class="eyebrow">Actual book pages</span><h2>Look inside</h2></div><p>Reduced-size samples from the finished interior. Tap a page for a closer look.</p></div><div class="preview-grid">{samples}</div></div></section>{related_section}<dialog class="preview-dialog" aria-label="Enlarged interior preview"><button type="button" class="dialog-close" aria-label="Close preview">Close ×</button><img alt="Enlarged book interior sample"><p></p></dialog>'''
+        shell(f'books/{b["id"]}/index.html', b.get('seoTitle', full_title(b)), b.get('metaDescription', b['description']+' See actual interior pages and book information.'), main, image, b)
 
 
 def simple():

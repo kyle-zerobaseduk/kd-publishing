@@ -1,0 +1,58 @@
+name: SEO and mobile validation
+
+on:
+  pull_request:
+    paths:
+      - 'books/**'
+      - 'catalogue/**'
+      - 'scripts/**'
+      - 'styles.css'
+      - 'site.js'
+      - '.github/workflows/seo-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install validation dependencies
+        run: |
+          python -m pip install Pillow
+          npm install --prefix "$RUNNER_TEMP/kd-lighthouse" --no-save lighthouse@13.5.0
+      - name: Build and validate preservation
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python scripts/build.py
+          python scripts/check_site.py
+          node scripts/test_tracking.js
+          python scripts/check_design.py
+          python scripts/check_seo.py --baseline-ref "$BASE_SHA"
+          python scripts/test_resource_template.py
+          git diff --exit-code -- '*.html' sitemap.xml robots.txt
+          mkdir -p "$RUNNER_TEMP/kd-baseline"
+          git archive "$BASE_SHA" | tar -x -C "$RUNNER_TEMP/kd-baseline"
+      - name: Check responsive release layouts
+        env:
+          KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules
+          CHROME_PATH: /usr/bin/google-chrome
+        run: node scripts/check_responsive.mjs
+      - name: Measure mobile lab performance
+        env:
+          KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules
+          KD_BASELINE_DIR: ${{ runner.temp }}/kd-baseline
+          KD_REPORT_DIR: ${{ runner.temp }}/kd-mobile-reports
+          CHROME_PATH: /usr/bin/google-chrome
+        run: node scripts/run_mobile_checks.mjs
