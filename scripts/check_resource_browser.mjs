@@ -18,7 +18,7 @@ const browser=await puppeteer.launch({executablePath:process.env.CHROME_PATH,hea
 const results=[],a11y=[];
 try{
  for(const width of [320,390,768,1024,1440])for(const target of targets){
-  const page=await browser.newPage();await page.setViewport({width,height:900});const errors=[],external=[];
+  const context=await browser.createBrowserContext();const page=await context.newPage();await page.setViewport({width,height:900});const errors=[],external=[];
   page.on('pageerror',e=>errors.push(e.message));await page.setRequestInterception(true);
   page.on('request',req=>{if(!req.url().startsWith(origin)&&!req.url().startsWith('data:')){external.push(req.url());req.abort();}else req.continue();});
   await page.goto(origin+'/'+target,{waitUntil:'networkidle0'});await page.evaluate(()=>document.fonts.ready);
@@ -62,7 +62,7 @@ try{
    assert.equal(events.filter(a=>a[1]==='related_book_click').length,1);
    assert.equal(events.filter(a=>a[1]==='printable_download').length,record.downloads.length?1:0);
   }
-  results.push({target:target||'/',width,status:'pass'});await page.close();console.log(`PASS ${target||'/'} ${width}px`);
+  results.push({target:target||'/',width,status:'pass'});await context.close();console.log(`PASS ${target||'/'} ${width}px`);
  }
 }finally{fs.writeFileSync(path.join(out,'resource-browser.json'),JSON.stringify({results,a11y},null,2));await browser.close();await new Promise(r=>server.close(r));}
 console.log(`PASS ${results.length} rendered combinations; ${a11y.length} axe WCAG A/AA scans; download MIME, consent and resource events; keyboard focus.`);
