@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {execFileSync} from 'node:child_process';
+const previousCss=execFileSync('git',['show','e48b4d7ddf89eda003002417159ba3b9c9121b4f:styles.css'],{encoding:'utf8'});
 const root=process.cwd(), modules=process.env.KD_LIGHTHOUSE_MODULE_DIR, out=process.env.KD_REPORT_DIR;
 fs.mkdirSync(out,{recursive:true});
 const pkg=JSON.parse(fs.readFileSync(path.join(modules,'puppeteer-core/package.json')));
@@ -15,17 +17,33 @@ const server=http.createServer((req,res)=>{let file=path.resolve(root,'.'+decode
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin=`http://127.0.0.1:${server.address().port}`;
 const browser=await puppeteer.launch({executablePath:process.env.CHROME_PATH,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
-const results=[],a11y=[];
+const results=[],a11y=[],consent=[];
 try{
  for(const width of [320,390,768,1024,1440])for(const target of targets){
   const context=await browser.createBrowserContext();const page=await context.newPage();await page.setViewport({width,height:900});const errors=[],external=[];
   page.on('pageerror',e=>errors.push(e.message));await page.setRequestInterception(true);
   page.on('request',req=>{if(!req.url().startsWith(origin)&&!req.url().startsWith('data:')){external.push(req.url());req.abort();}else req.continue();});
-  await page.goto(origin+'/'+target,{waitUntil:'networkidle0'});await page.evaluate(()=>document.fonts.ready);
+  await page.evaluateOnNewDocument(()=>{window.kdLayoutShift=0;new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput)window.kdLayoutShift+=e.value;}).observe({type:'layout-shift',buffered:true});});
+  await page.goto(origin+'/'+target,{waitUntil:'networkidle0'});await page.evaluate(()=>document.fonts.ready);const initialLayoutShift=await page.evaluate(()=>window.kdLayoutShift);
   const issues=await page.evaluate(()=>{const a=[];if(document.documentElement.scrollWidth>innerWidth+1)a.push('overflow');for(const n of document.querySelectorAll('main h1,main p,main li,main svg')){const b=n.getBoundingClientRect();if(b.width&&(b.left< -1||b.right>innerWidth+1))a.push('content outside viewport');}return a;});
   assert.deepEqual(issues,[],target+' '+width);assert.deepEqual(errors,[]);assert.deepEqual(external,[],'requests before consent');
   if(width<=768){await page.click('.menu-toggle');assert.equal(await page.$eval('.menu-toggle',e=>e.getAttribute('aria-expanded')),'true');assert.equal(await page.$eval('.nav a[href$="resources/"]',e=>e.getBoundingClientRect().height>=44),true);await page.click('.menu-toggle');}
   const record=records.find(r=>target.includes('/'+r.slug+'/'));
+  if(width<=390){
+   const layout=await page.evaluate(css=>{
+    function measure(){const banner=document.querySelector('.cookie-notice'),p=banner.querySelector('p');return {height:banner.getBoundingClientRect().height,fontSize:getComputedStyle(p).fontSize,buttons:Array.from(banner.querySelectorAll('button'),b=>{const r=b.getBoundingClientRect(),s=getComputedStyle(b);return {width:r.width,height:r.height,left:r.left,right:r.right,color:s.color,background:s.backgroundColor};}),privacyVisible:banner.querySelector('a').getBoundingClientRect().height>0};}
+    const current=measure(),link=document.querySelector('link[rel="stylesheet"]'),style=document.createElement('style');link.disabled=true;style.textContent=css;document.head.appendChild(style);const previous=measure();style.remove();link.disabled=false;return {current,previous};
+   },previousCss);
+   assert.ok(layout.current.height<layout.previous.height);
+   assert.equal(layout.current.fontSize,layout.previous.fontSize);
+   assert.equal(layout.current.privacyVisible,true);
+   assert.ok(layout.current.buttons.every(b=>b.height>=44&&b.left>=0&&b.right<=width));
+   assert.ok(Math.abs(layout.current.buttons[0].width-layout.current.buttons[1].width)<1);
+   assert.equal(layout.current.buttons[0].background,layout.current.buttons[1].background);
+   assert.equal(layout.current.buttons[0].color,layout.current.buttons[1].color);
+   consent.push({target:target||'/',width,...layout});
+  }
+
   if(record){
    const downloads=await page.$$eval('[data-resource-download]',nodes=>nodes.map(n=>n.href));
    for(const href of downloads){const response=await page.evaluate(async u=>{const r=await fetch(u);return {status:r.status,type:r.headers.get('content-type'),magic:(await r.text()).slice(0,4)};},href);assert.equal(response.status,200);assert.equal(response.type,'application/pdf');assert.equal(response.magic,'%PDF');}
@@ -44,13 +62,19 @@ try{
   }
   if(record&&width===390){
    // Decline: interactions still work and produce no analytics requests.
-   await page.click('[data-consent="reject"]');
+   await page.focus('#cookie-notice a');await page.keyboard.press('Tab');
+   assert.equal(await page.evaluate(()=>document.activeElement.dataset.consent),'reject');
+   assert.notEqual(await page.evaluate(()=>getComputedStyle(document.activeElement).outlineStyle),'none');
+   await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>localStorage.getItem('kd_analytics_consent')),'no');
    await page.$$eval('[data-resource-download],[data-related-book]',nodes=>nodes.forEach(n=>n.addEventListener('click',e=>e.preventDefault())));
    await page.$eval('[data-related-book]',e=>e.click());
    if(record.downloads.length)await page.$eval('[data-resource-download]',e=>e.click());
    assert.deepEqual(external,[]);
    await page.evaluate(()=>localStorage.removeItem('kd_analytics_consent'));await page.reload({waitUntil:'networkidle0'});
-   await page.click('[data-consent="accept"]');
+   await page.focus('[data-consent="reject"]');await page.keyboard.press('Tab');
+   assert.equal(await page.evaluate(()=>document.activeElement.dataset.consent),'accept');
+   assert.notEqual(await page.evaluate(()=>getComputedStyle(document.activeElement).outlineStyle),'none');
+   await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>localStorage.getItem('kd_analytics_consent')),'yes');
    const initial=await page.evaluate(()=>Array.from(window.dataLayer,a=>Array.from(a)));
    assert.equal(initial.filter(a=>a[0]==='event'&&a[1]==='page_view').length,1);
    assert.equal(initial.filter(a=>a[0]==='event'&&a[1]==='resource_page_view').length,1);
@@ -62,7 +86,7 @@ try{
    assert.equal(events.filter(a=>a[1]==='related_book_click').length,1);
    assert.equal(events.filter(a=>a[1]==='printable_download').length,record.downloads.length?1:0);
   }
-  results.push({target:target||'/',width,status:'pass'});await context.close();console.log(`PASS ${target||'/'} ${width}px`);
+  results.push({target:target||'/',width,status:'pass',initialLayoutShift});await context.close();console.log(`PASS ${target||'/'} ${width}px`);
  }
-}finally{fs.writeFileSync(path.join(out,'resource-browser.json'),JSON.stringify({results,a11y},null,2));await browser.close();await new Promise(r=>server.close(r));}
+}finally{fs.writeFileSync(path.join(out,'resource-browser.json'),JSON.stringify({results,a11y,consent},null,2));await browser.close();await new Promise(r=>server.close(r));}
 console.log(`PASS ${results.length} rendered combinations; ${a11y.length} axe WCAG A/AA scans; download MIME, consent and resource events; keyboard focus.`);

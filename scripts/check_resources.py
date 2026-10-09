@@ -1,5 +1,6 @@
 """Verify content, independent puzzle solving, printed grids, rotation maths and A4 geometry."""
 import json,re
+from pathlib import Path
 from collections import Counter
 from pypdf import PdfReader
 from resource_content import ROOT,ALL_RESOURCES,SIX,EIGHT,route
@@ -70,3 +71,24 @@ for r in ALL_RESOURCES:
   assert all(a[1]==b[0] for a,b in zip(windows,windows[1:]))
   assert sum(b-a for a,b in windows)==60
 print(f'PASS: {len(selected())} selected developed drafts; {sum(len(r["downloads"]) for r in selected())} A4 PDFs; unique forward word placements, printed grids and answer coordinates exact; rotation totals; 60-minute schedules; PDF text bounds')
+
+# Selected release must contain exactly its articles, non-empty hubs and downloads.
+from html.parser import HTMLParser
+from xml.etree import ElementTree
+chosen=selected()
+expected_routes={'resources/','resources/football/','resources/puzzles/','resources/workplace-humour/'}|{str(Path(route(r)).parent)+'/' for r in chosen}
+assert {str(p.parent.relative_to(ROOT))+'/' for p in (ROOT/'resources').rglob('index.html')}==expected_routes
+assert {p.relative_to(ROOT).as_posix() for p in (ROOT/'assets/resources').glob('*.pdf')}=={d['path'] for r in chosen for d in r['downloads']}
+assert all(any(r['cluster']==cluster for r in chosen) for cluster in ('football','puzzles','workplace-humour'))
+class LinkScope(HTMLParser):
+ def handle_starttag(self,tag,attrs):
+  if tag=='a':
+   for key,value in attrs:
+    if key=='href':assert not any(r['slug'] in value for r in ALL_RESOURCES if r not in chosen),(self.page,value)
+for p in ROOT.rglob('index.html'):
+ parser=LinkScope();parser.page=p;parser.feed(p.read_text())
+ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}
+sitemap=[n.text for n in ElementTree.parse(ROOT/'sitemap.xml').findall('.//s:loc',ns)]
+expected={'https://kyle-zerobaseduk.github.io/kd-publishing/'+p.relative_to(ROOT).as_posix().removesuffix('index.html') for p in ROOT.rglob('index.html')}
+assert len(sitemap)==len(expected) and set(sitemap)==expected
+print(f'PASS exact release scope: {len(chosen)} articles, 4 non-empty hubs, {len([d for r in chosen for d in r["downloads"]])} downloads; no unreleased links; sitemap equals canonical page set')

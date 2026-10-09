@@ -293,3 +293,12 @@ p { margin: 0 0 1.25rem; }
 /* Reserve the existing mobile hero cover geometry before the eager image decodes. */
 .hero-book-image img { aspect-ratio: 638 / 845; }
 @media (max-width: 800px) { .resource-table-wrap th, .resource-table-wrap td { padding: .5rem; } }
+
+/* Narrow mobile consent refinement: same explanation, type and 44px controls. */
+@media (max-width: 600px) {
+  .consent-inner { padding-block: .625rem; gap: .5rem; }
+  .consent-inner p { line-height: 1.5; }
+  .consent-actions { width: 100%; }
+  .consent-actions .button { flex: 1; color: var(--ink); background: transparent; border-color: #758580; }
+  .consent-actions .button:hover { color: var(--ink); background: var(--shelf); border-color: var(--ink); }
+}
