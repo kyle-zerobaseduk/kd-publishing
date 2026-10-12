@@ -149,4 +149,4 @@ for (const book of catalogue) {
   assert.equal(outbound.category, book.category);
   assert.equal(outbound.destination_url, destination);
 }
-console.log('PASS: pre-consent privacy, opt-in/rejection/withdrawal, navigation, all 24 book funnels, campaign/referrer, analytics failure, unconfigured state');
+console.log(`PASS: pre-consent privacy, opt-in/rejection/withdrawal, navigation, all ${catalogue.length} book funnels, campaign/referrer, analytics failure, unconfigured state`);

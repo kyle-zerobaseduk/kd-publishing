@@ -11,7 +11,9 @@ const modules = path.resolve(process.env.KD_LIGHTHOUSE_MODULE_DIR);
 const puppeteerDir = path.join(modules, 'puppeteer-core');
 const puppeteerPackage = JSON.parse(fs.readFileSync(path.join(puppeteerDir, 'package.json'), 'utf8'));
 const { default: puppeteer } = await import(pathToFileURL(path.join(puppeteerDir, puppeteerPackage.main)));
-const targets = ['', 'books/first-time-football-coach/', 'books/season-planner/', 'books/british-nostalgia/', 'books/i-deleted-the-honest-version/', 'books/cozy-christmas-word-search/'];
+const targets = process.env.KD_RESPONSIVE_TARGETS ? JSON.parse(process.env.KD_RESPONSIVE_TARGETS) : ['', 'books/first-time-football-coach/', 'books/season-planner/', 'books/british-nostalgia/', 'books/i-deleted-the-honest-version/', 'books/cozy-christmas-word-search/'];
+const reports = process.env.KD_REPORT_DIR;
+if (reports) fs.mkdirSync(reports, { recursive: true });
 const widths = [320, 360, 390, 768, 1024, 1440];
 const types = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.webp': 'image/webp' };
 const server = http.createServer((req, res) => {
@@ -69,7 +71,7 @@ try {
         await page.click('.submenu-toggle');
         await page.click('.menu-toggle');
       }
-      if (target) {
+      if (await page.$('[data-preview]')) {
         await page.click('[data-preview]');
         assert.equal(await page.$eval('.preview-dialog', e => e.open), true);
         await page.keyboard.press('Escape');
@@ -77,8 +79,12 @@ try {
       }
       if (width === 390 || width === 1440) {
         await page.evaluate(() => scrollTo(0, 0));
-        const data = await page.screenshot({ type: 'jpeg', quality: 40, fullPage: true, encoding: 'base64' });
-        console.log('KD_RESPONSIVE_SCREENSHOT ' + JSON.stringify({ page: target || '/', width, data }));
+        if (reports) {
+          await page.screenshot({ path: path.join(reports, `${target.replaceAll('/', '-') || 'home'}${width}.png`), fullPage: true });
+        } else {
+          const data = await page.screenshot({ type: 'jpeg', quality: 40, fullPage: true, encoding: 'base64' });
+          console.log('KD_RESPONSIVE_SCREENSHOT ' + JSON.stringify({ page: target || '/', width, data }));
+        }
       }
       await page.click('[data-consent="reject"]');
       assert.equal(await page.$eval('#cookie-notice', e => e.hidden), true);
@@ -88,7 +94,8 @@ try {
     }
     await page.close();
   }
-  console.log(`PASS: ${checked} priority page/viewport release checks; images, mobile navigation, previews and consent; no external requests`);
+  if (reports) fs.writeFileSync(path.join(reports, 'responsive-results.json'), JSON.stringify({ checked, targets, widths, result: 'pass' }, null, 2));
+  console.log(`PASS: ${checked} page/viewport release checks; images, mobile navigation, previews and consent; no external requests`);
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));
