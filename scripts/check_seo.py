@@ -114,11 +114,15 @@ def main():
         def old(path):
             return subprocess.check_output(['git', 'show', baseline + ':' + path], cwd=ROOT)
         before = json.loads(old('catalogue/books.json'))
-        assert len(before) == len(BOOKS) == 24
-        assert before == BOOKS, 'All catalogue metadata must remain exact'
+        # Catalogue updates may add records; every existing record stays exact.
+        current = {b['id']: b for b in BOOKS}
+        assert all(current.get(b['id']) == b for b in before), 'Existing catalogue metadata changed'
+        additions = [b for b in BOOKS if b['id'] not in {x['id'] for x in before}]
+        assert len(BOOKS) == len(before) + len(additions)
         assert (ROOT/'catalogue/search-console.json').read_bytes() == old('catalogue/search-console.json')
-        for path in [ROOT/'robots.txt', *ROOT.glob('assets/covers/*.webp'), *ROOT.glob('assets/previews/*.webp')]:
-            assert path.read_bytes() == old(path.relative_to(ROOT).as_posix()), path
+        original_assets = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', baseline, '--', 'assets/covers', 'assets/previews', 'assets/responsive'], cwd=ROOT).decode().splitlines()
+        for name in ['robots.txt', *original_assets]:
+            assert (ROOT/name).read_bytes() == old(name), name
         baseline_css=old('styles.css').decode()
         assert (ROOT/'styles.css').read_text().startswith(baseline_css), 'Existing design CSS altered'
         def protected(markup):
@@ -133,9 +137,17 @@ def main():
             return markup
         for path in pages:
             if path.is_relative_to(ROOT/'resources'): continue
+            relative = path.relative_to(ROOT).as_posix()
+            if additions:
+                new_pages = {f'books/{b["id"]}/index.html' for b in additions}
+                collection_pages = {'index.html', 'books/index.html', 'latest/index.html'} | {f'categories/{b["category"]}/index.html' for b in additions}
+                if relative in new_pages | collection_pages: continue
             previous=old(path.relative_to(ROOT).as_posix()).decode()
-            assert protected(path.read_text())==previous, f'Protected HTML changed beyond declared nav/config/related links/cover hints/privacy additions: {path}'
-        print('PASS: all 24 catalogue records, ASINs, Amazon destinations, 78 original previews, original covers, verification token and base CSS exact; protected HTML unchanged outside declared additions')
+            if additions:
+                assert path.read_text() == previous, f'Existing page changed during catalogue addition: {path}'
+            else:
+                assert protected(path.read_text())==protected(previous), f'Protected HTML changed beyond declared nav/config/related links/cover hints/privacy additions: {path}'
+        print(f'PASS: all {len(before)} existing catalogue records, ASINs, Amazon destinations, original assets, verification token and base CSS exact; {len(additions)} added books; protected HTML unchanged outside declared additions')
     for r in selected():
         page=pages[ROOT/route(r)]
         article,trail=page.schemas
@@ -144,7 +156,7 @@ def main():
         assert article['url']==page.canonical and 'datePublished' not in article
         assert trail['@type']=='BreadcrumbList' and [x['position'] for x in trail['itemListElement']]==[1,2,3,4]
         assert trail['itemListElement'][-1]['item']==page.canonical
-    print(f'PASS: {len(pages)} unique canonicals, titles and descriptions; all pages reachable; fragments valid; 24 Book and BreadcrumbList objects; optional verification hook')
+    print(f'PASS: {len(pages)} unique canonicals, titles and descriptions; all pages reachable; fragments valid; {len(BOOKS)} Book and BreadcrumbList objects; optional verification hook')
     print('JSON syntax and expected schema fields validated locally. Google rich-result eligibility and indexed canonicals require external Google validation.')
 
 

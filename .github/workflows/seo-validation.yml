@@ -56,6 +56,13 @@ jobs:
           CHROME_PATH: /usr/bin/google-chrome
           KD_REPORT_DIR: ${{ runner.temp }}/kd-resource-reports
         run: node scripts/check_resource_browser.mjs
+      - name: Check book 25 and catalogue on mobile and desktop
+        env:
+          KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules
+          CHROME_PATH: /usr/bin/google-chrome
+          KD_RESPONSIVE_TARGETS: '["", "books/", "categories/puzzles/", "latest/", "books/nostalgic-word-search-1950s-1980s/"]'
+          KD_REPORT_DIR: ${{ runner.temp }}/kd-catalogue-reports
+        run: node scripts/check_responsive.mjs
       - name: Measure only homepage and nostalgia mobile changes
         env:
           KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules
@@ -72,4 +79,5 @@ jobs:
           path: |
             ${{ runner.temp }}/kd-resource-reports
             ${{ runner.temp }}/kd-mobile-reports
+            ${{ runner.temp }}/kd-catalogue-reports
           retention-days: 7

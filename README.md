@@ -21,6 +21,16 @@ Priority records can use the optional `features`, `giftNote`, `publisher`, `form
 
 The new front-cover derivatives use the supplied final approved PDFs. Four workplace-humour samples use pages 5, 8, 14 and 55 of the supplied 62-page interior candidate. Existing British Nostalgia samples are retained. Source PDFs and listing screenshots stay outside the public repository. No prices, publication dates or book page counts are added to customer-facing pages.
 
+## Book 25 catalogue addition (12 October 2026)
+
+`nostalgic-word-search-1950s-1980s` adds **Nostalgic Word Search: The 1950s to the 1980s**, with the current subtitle **100 Large-Print Puzzles for Adults & Seniors**, author Kyle Dyer and owner-verified live paperback ASIN `B0HMFM55GQ`. Its American nostalgia content is distinct from the existing British Nostalgia book. Publication date and price are not asserted. `catalogueAdded` is a website addition date only.
+
+The front-cover derivative comes from `Nostalgic_Word_Search_1950s_to_1980s_KDP_Cover_FINAL_METADATA_CORRECTED.pdf`. Genuine samples use pages 6, 32, 84 and 110 of `Nostalgic_Word_Search_1950s_to_1980s_KDP_Interior.pdf`. Cover and interior source PDFs remain private. Only reduced WebP derivatives are committed. Source inspection supports 100 puzzles, 25 per decade, large-print grids/word lists, American memory notes and full-size solutions.
+
+The owner-requested purchase button uses exactly `https://www.amazon.co.uk/dp/B0HMFM55GQ`. Amazon UK returned HTTP 503 to the automated check; the browser returned “We do not support your session or client.” Its rendered title, selected paperback and current buyability therefore remain **UNVERIFIED**, pending a normal-session listing check before merge approval. Do not infer a broken listing from this client restriction.
+
+All 24 original catalogue records, product HTML pages, Amazon destinations and existing image bytes are protected by the baseline validation. GA4 uses the existing consent workflow and the new record’s unique book ID and ASIN. This is a catalogue addition only; no KDP metadata, cover/interior masters or marketing systems are changed. Merge and deployment require owner approval.
+
 ## Analytics
 
 **Configured stream: `G-64LMW6KFB7`.** The builder embeds this genuine GA4 Web Stream Measurement ID into each page by default. `KD_GA4_ID` remains an optional build-time override. This does not load Google Analytics until the visitor opts in. The site sends its own page views, preview and Amazon events. Read the Google-side Enhanced measurement settings and check for actual duplication before proposing an account change; do not switch off all enhanced features blindly. Do not paste a second Google tag or add Google Tag Manager. Check a consented test visit in GA4 Realtime before treating data collection as verified. Preview testing with the same ID can mix preview traffic into production reports; identify those test visits by their preview hostname or exclude them in reporting.
