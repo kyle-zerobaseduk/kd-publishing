@@ -44,9 +44,15 @@ jobs:
           python scripts/check_site.py
           node scripts/test_tracking.js
           python scripts/check_design.py
-          python scripts/check_seo.py --baseline-ref "$BASE_SHA"
+          if git diff --name-only "$BASE_SHA" HEAD -- catalogue/books.json | grep -q .; then
+            python scripts/check_seo.py --baseline-ref "$BASE_SHA" --updated-book 80-day-sleep
+          else
+            python scripts/check_seo.py --baseline-ref "$BASE_SHA"
+          fi
           python scripts/test_resource_template.py
           python scripts/check_resources.py
+          python -m pip install playwright
+          python scripts/verify_sleep_release.py --report-dir "$RUNNER_TEMP/kd-sleep-reports"
           git diff --exit-code -- '*.html' sitemap.xml robots.txt
           mkdir -p "$RUNNER_TEMP/kd-baseline"
           git archive "$BASE_SHA" | tar -x -C "$RUNNER_TEMP/kd-baseline"
@@ -60,7 +66,7 @@ jobs:
         env:
           KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules
           CHROME_PATH: /usr/bin/google-chrome
-          KD_RESPONSIVE_TARGETS: '["", "books/", "categories/puzzles/", "latest/", "books/nostalgic-word-search-1950s-1980s/"]'
+          KD_RESPONSIVE_TARGETS: '["", "books/", "categories/journals/", "latest/", "books/80-day-sleep/", "books/nostalgic-word-search-1950s-1980s/"]'
           KD_REPORT_DIR: ${{ runner.temp }}/kd-catalogue-reports
         run: node scripts/check_responsive.mjs
       - name: Measure only homepage and nostalgia mobile changes
@@ -80,4 +86,5 @@ jobs:
             ${{ runner.temp }}/kd-resource-reports
             ${{ runner.temp }}/kd-mobile-reports
             ${{ runner.temp }}/kd-catalogue-reports
+            ${{ runner.temp }}/kd-sleep-reports
           retention-days: 7

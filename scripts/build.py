@@ -6,6 +6,7 @@ import re
 from datetime import date
 from functools import cache
 from pathlib import Path
+from book_assets import cover_path, preview_path
 
 ROOT = Path(__file__).resolve().parents[1]
 BOOKS = json.loads((ROOT / 'catalogue/books.json').read_text())
@@ -94,14 +95,14 @@ def webp_size(image):
 
 
 def preview(book, pre, page):
-    image_path = f"assets/previews/{book['id']}-{page}.webp"
+    image_path = preview_path(book, page)
     width, height = webp_size(ROOT / image_path)
     name = e(short_title(book))
     return f'''<button class="preview" type="button" data-preview="{pre}{image_path}" data-page="{page}" aria-label="Enlarge interior sample page {page} of {name}"><img src="{pre}{image_path}" alt="Actual interior page {page} from {name}" width="{width}" height="{height}" loading="lazy"><span>Page {page}<span class="preview-action">Enlarge <span aria-hidden="true">↗</span></span></span></button>'''
 
 
 def cover(book, pre, loading='lazy'):
-    image_path = book.get('coverImage') or f"assets/covers/{book['id']}.webp"
+    image_path = cover_path(book)
     image = ROOT / image_path
     if image.exists():
         width, height = webp_size(image)
@@ -178,7 +179,7 @@ def catalogue():
 def products():
     from build_resources import book_resources
     for b in BOOKS:
-        pre='../../';name=short_title(b); image=b.get('coverImage') or (f'assets/covers/{b["id"]}.webp' if b['coverSource'] else None)
+        pre='../../';name=short_title(b); image=cover_path(b) if b.get('coverImage') or b['coverSource'] else None
         amazon_url=b.get('amazonUrl') or f'https://www.amazon.co.uk/dp/{b["asin"]}'
         purchase=(f'<a class="button amazon-link" href="{e(amazon_url)}" target="_blank" rel="noopener noreferrer" data-book-id="{b["id"]}" data-asin="{b["asin"]}">Buy on Amazon UK <span aria-hidden="true">↗</span></a>' if b['status']=='live' and b.get('amazonLinkEnabled',True) else '<p class="review-note">Amazon UK purchase link temporarily unavailable. We’re checking this listing.</p>' if b['status']=='live' else '<p class="review-note">Paperback in review. An Amazon purchase link will be added after publication.</p>')
         purchase_note = '<small>Amazon handles your order. Prices and availability may change there.</small>' if b['status']=='live' and b.get('amazonLinkEnabled',True) else ''
