@@ -50,7 +50,9 @@ class Page(HTMLParser):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--baseline-ref')
-    baseline = parser.parse_args().baseline_ref
+    parser.add_argument('--updated-book', choices=['80-day-sleep'], help='Explicit edition update, with all other books protected')
+    args = parser.parse_args()
+    baseline = args.baseline_ref
     pages = {p: Page(p.read_text()) for p in ROOT.rglob('index.html')}
     assert len({p.title for p in pages.values()}) == len(pages)
     assert len({p.meta['description'] for p in pages.values()}) == len(pages)
@@ -110,7 +112,10 @@ def main():
         raise AssertionError('Full HTML tag should be rejected')
     except ValueError:
         pass
-    if baseline:
+    if baseline and args.updated_book:
+        from check_edition_preservation import check
+        check(baseline)
+    if baseline and not args.updated_book:
         def old(path):
             return subprocess.check_output(['git', 'show', baseline + ':' + path], cwd=ROOT)
         before = json.loads(old('catalogue/books.json'))

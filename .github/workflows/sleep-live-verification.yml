@@ -1,0 +1,32 @@
+name: Verify live Sleep edition
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'books/80-day-sleep/**'
+      - 'assets/covers/80-day-sleep*'
+      - 'assets/previews/80-day-sleep*'
+      - 'scripts/verify_sleep_release.py'
+      - '.github/workflows/sleep-live-verification.yml'
+permissions:
+  contents: read
+jobs:
+  verify-public-site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install playwright
+      - name: Wait for Pages, then inspect the public website
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: python scripts/verify_sleep_release.py --base-url https://kyle-zerobaseduk.github.io/kd-publishing/ --wait-seconds 600 --report-dir "$RUNNER_TEMP/sleep-live"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sleep-live-mobile-verification
+          path: ${{ runner.temp }}/sleep-live
+          retention-days: 14

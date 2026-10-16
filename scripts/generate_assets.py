@@ -4,15 +4,24 @@ Usage: python scripts/generate_assets.py ../assets_source ../project_sources
 Source PDFs stay outside this repository; only the small WebP exports are committed.
 """
 import json
-import sys
+import argparse
 from pathlib import Path
 
 import fitz
 from PIL import Image
+from book_assets import cover_path, preview_path
 
 ROOT = Path(__file__).resolve().parents[1]
 books = json.loads((ROOT / 'catalogue/books.json').read_text())
-sources = [Path(p).resolve() for p in sys.argv[1:]]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--book', help='Export only this existing catalogue ID')
+parser.add_argument('sources', nargs='+', type=Path)
+args = parser.parse_args()
+sources = [p.resolve() for p in args.sources]
+if args.book:
+    books = [b for b in books if b['id'] == args.book]
+    if not books:
+        parser.error('Unknown catalogue ID')
 
 
 def find(name):
@@ -30,15 +39,16 @@ def image(page, width):
     return Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
 
 
-def save_web(im, destination, width):
+def save_web(im, destination, width, quality=78):
     im.thumbnail((width, 1300), Image.Resampling.LANCZOS)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    im.save(destination, format='WEBP', quality=78, method=6)
+    im.save(destination, format='WEBP', quality=quality, method=6)
     assert max(im.size) <= 1300
 
 
 for book in books:
     ident = book['id']
+    quality = 90 if book.get('assetVersion') else 78
     if book['coverSource']:
         pdf = fitz.open(find(book['coverSource']))
         page = pdf[0]
@@ -55,11 +65,11 @@ for book in books:
             front_points = 576 if 'football-coach' in ident or ident == 'season-planner' else 612
             left = round(im.width * (1 - front_points / page.rect.width))
             im = im.crop((left, 0, im.width, im.height))
-        save_web(im, ROOT / 'assets/covers' / f'{ident}.webp', 740)
+        save_web(im, ROOT / cover_path(book), 740, quality)
     pdf = fitz.open(find(book['interiorSource']))
     for number in book['previewPages']:
         if not 1 <= number <= len(pdf):
             raise ValueError(f'{ident}: invalid page {number} of {len(pdf)}')
         im = image(pdf[number - 1], 950)
-        save_web(im, ROOT / 'assets/previews' / f'{ident}-{number}.webp', 850)
+        save_web(im, ROOT / preview_path(book, number), 850, quality)
 print(f'Exported web images for {len(books)} books')
