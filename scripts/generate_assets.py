@@ -5,7 +5,6 @@ Source PDFs stay outside this repository; only the small WebP exports are commit
 """
 import json
 import argparse
-import sys
 from pathlib import Path
 
 import fitz
@@ -40,15 +39,16 @@ def image(page, width):
     return Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
 
 
-def save_web(im, destination, width):
+def save_web(im, destination, width, quality=78):
     im.thumbnail((width, 1300), Image.Resampling.LANCZOS)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    im.save(destination, format='WEBP', quality=90, method=6)
+    im.save(destination, format='WEBP', quality=quality, method=6)
     assert max(im.size) <= 1300
 
 
 for book in books:
     ident = book['id']
+    quality = 90 if book.get('assetVersion') else 78
     if book['coverSource']:
         pdf = fitz.open(find(book['coverSource']))
         page = pdf[0]
@@ -65,11 +65,11 @@ for book in books:
             front_points = 576 if 'football-coach' in ident or ident == 'season-planner' else 612
             left = round(im.width * (1 - front_points / page.rect.width))
             im = im.crop((left, 0, im.width, im.height))
-        save_web(im, ROOT / cover_path(book), 740)
+        save_web(im, ROOT / cover_path(book), 740, quality)
     pdf = fitz.open(find(book['interiorSource']))
     for number in book['previewPages']:
         if not 1 <= number <= len(pdf):
             raise ValueError(f'{ident}: invalid page {number} of {len(pdf)}')
         im = image(pdf[number - 1], 950)
-        save_web(im, ROOT / preview_path(book, number), 850)
+        save_web(im, ROOT / preview_path(book, number), 850, quality)
 print(f'Exported web images for {len(books)} books')

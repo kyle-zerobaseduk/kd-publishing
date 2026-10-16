@@ -44,7 +44,7 @@ jobs:
           python scripts/check_site.py
           node scripts/test_tracking.js
           python scripts/check_design.py
-          if git diff --name-only "$BASE_SHA" HEAD -- catalogue/books.json | grep -q .; then
+          if git diff --unified=0 "$BASE_SHA" HEAD -- catalogue/books.json | grep -q '^+.*"id":"80-day-sleep".*"assetVersion":"20261015"'; then
             python scripts/check_seo.py --baseline-ref "$BASE_SHA" --updated-book 80-day-sleep
           else
             python scripts/check_seo.py --baseline-ref "$BASE_SHA"
