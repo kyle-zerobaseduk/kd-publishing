@@ -36,8 +36,8 @@ try {
   });
   await page.setViewport({width:390,height:844});
   await page.goto(base+'/books/',{waitUntil:'networkidle0'});
-  assert.equal(await page.$eval('#book-result-count',e=>e.textContent),'26 of 26 books');
-  await page.type('#book-search','nostalgia');
+  assert.equal(await page.$eval('#book-result-count',e=>e.textContent),`${books.length} of ${books.length} books`);
+  await page.type('#book-search','FOOTBALL');
   assert.equal(await page.$$eval('.book-card:not([hidden])',e=>e.length),2);
   await page.$eval('#book-search',e=>{e.value='NO-SUCH-BOOK'; e.dispatchEvent(new Event('input',{bubbles:true}));});
   assert.equal(await page.$eval('#book-no-results',e=>e.hidden),false);
@@ -55,7 +55,7 @@ try {
   assert.deepEqual(violations.map(v=>v.id),[],'catalogue accessibility');
   await page.setJavaScriptEnabled(false);
   await page.reload({waitUntil:'networkidle0'});
-  assert.equal(await page.$$eval('.book-card:not([hidden])',e=>e.length),26);
+  assert.equal(await page.$$eval('.book-card:not([hidden])',e=>e.length),books.length);
   assert.equal(await page.$eval('.catalogue-tools',e=>e.hidden),true);
   await page.setJavaScriptEnabled(true);
   for(const book of books){
