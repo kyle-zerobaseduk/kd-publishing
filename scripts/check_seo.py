@@ -121,7 +121,15 @@ def main():
         before = json.loads(old('catalogue/books.json'))
         # Catalogue updates may add records; every existing record stays exact.
         current = {b['id']: b for b in BOOKS}
-        assert all(current.get(b['id']) == b for b in before), 'Existing catalogue metadata changed'
+        # Book 26's owner-confirmed purchase-link activation is the only
+        # permitted change to an existing record in this controlled release.
+        activated = {b['id'] for b in before
+                     if b['id'] == 'easy-word-search-for-dementia'
+                     and b.get('amazonLinkEnabled') is False
+                     and b.get('asin') == 'B0HNTX86GX'
+                     and b.get('amazonUrl') == 'https://www.amazon.co.uk/dp/B0HNTX86GX'
+                     and current.get(b['id']) == dict(b, amazonLinkEnabled=True)}
+        assert all(current.get(b['id']) == b or b['id'] in activated for b in before), 'Existing catalogue metadata changed'
         additions = [b for b in BOOKS if b['id'] not in {x['id'] for x in before}]
         assert len(BOOKS) == len(before) + len(additions)
         assert (ROOT/'catalogue/search-console.json').read_bytes() == old('catalogue/search-console.json')
@@ -148,11 +156,21 @@ def main():
                 collection_pages = {'index.html', 'books/index.html', 'latest/index.html'} | {f'categories/{b["category"]}/index.html' for b in additions}
                 if relative in new_pages | collection_pages: continue
             previous=old(path.relative_to(ROOT).as_posix()).decode()
-            if additions:
+            if relative in {f'books/{ident}/index.html' for ident in activated}:
+                unavailable = '<p class="review-note">Amazon UK purchase link temporarily unavailable. We’re checking this listing.</p>'
+                button = '<a class="button amazon-link" href="https://www.amazon.co.uk/dp/B0HNTX86GX" target="_blank" rel="noopener noreferrer" data-book-id="easy-word-search-for-dementia" data-asin="B0HNTX86GX">Buy on Amazon UK <span aria-hidden="true">↗</span></a>'
+                ending = '</div></div><div class="product-details">'
+                purchase_note = '<small>Amazon handles your order. Prices and availability may change there.</small>'
+                assert previous.count(unavailable) == previous.count(ending) == 1
+                expected = previous.replace(unavailable, button).replace(ending, '</div>' + purchase_note + '</div><div class="product-details">')
+                assert path.read_text() == expected, 'Book 26 changed beyond its purchase button and order note'
+            elif additions:
                 assert path.read_text() == previous, f'Existing page changed during catalogue addition: {path}'
             else:
                 assert protected(path.read_text())==protected(previous), f'Protected HTML changed beyond declared nav/config/related links/cover hints/privacy additions: {path}'
         print(f'PASS: all {len(before)} existing catalogue records, ASINs, Amazon destinations, original assets, verification token and base CSS exact; {len(additions)} added books; protected HTML unchanged outside declared additions')
+        if activated:
+            print('PASS: Book 26 owner-confirmed link activation only; all other record fields and page content exact')
     for r in selected():
         page=pages[ROOT/route(r)]
         article,trail=page.schemas
