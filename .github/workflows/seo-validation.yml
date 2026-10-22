@@ -54,6 +54,7 @@ jobs:
           python scripts/test_resource_template.py
           python scripts/check_resources.py
           python -m pip install playwright
+          python scripts/test_live_release_wait.py
           python scripts/verify_sleep_release.py --report-dir "$RUNNER_TEMP/kd-sleep-reports"
           git diff --exit-code -- '*.html' sitemap.xml robots.txt
           mkdir -p "$RUNNER_TEMP/kd-baseline"

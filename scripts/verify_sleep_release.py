@@ -13,8 +13,6 @@ from functools import partial
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from playwright.sync_api import sync_playwright
-
 ROOT = Path(__file__).resolve().parents[1]
 CATALOGUE = json.loads((ROOT / 'catalogue/books.json').read_text())
 LATEST_BOOK = max((b for b in CATALOGUE if b['status'] == 'live'),
@@ -32,7 +30,27 @@ def fetch(url):
         return response.read()
 
 
+def wait_for_live_files(base, files, wait_seconds):
+    """Wait for this release, even when its cover also exists in the old release."""
+    deadline = time.monotonic() + wait_seconds
+    def verify_file(file):
+        relative = file.relative_to(ROOT).as_posix()
+        remote = fetch(base + relative.removesuffix('index.html'))
+        assert hashlib.sha256(remote).digest() == hashlib.sha256(file.read_bytes()).digest(), f'Public bytes differ: {relative}'
+    while True:
+        try:
+            with ThreadPoolExecutor(max_workers=6) as pool:
+                list(pool.map(verify_file, files))
+            return
+        except Exception as error:
+            if time.monotonic() >= deadline:
+                raise
+            print(f'Waiting for Pages to serve this release: {error}', flush=True)
+            time.sleep(15)
+
+
 def main():
+    from playwright.sync_api import sync_playwright
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base-url', help='Omit to serve the checked-out site locally')
     parser.add_argument('--wait-seconds', type=int, default=0)
@@ -42,25 +60,9 @@ def main():
     server = None
     if args.base_url:
         base = args.base_url.rstrip('/') + '/'
-        deadline = time.monotonic() + args.wait_seconds
-        while True:
-            try:
-                for target in TARGETS:
-                    assert COVER.encode() in fetch(base + target), target
-                break
-            except Exception as error:
-                if time.monotonic() >= deadline:
-                    raise
-                print(f'Waiting for Pages to serve the edition: {error}', flush=True)
-                time.sleep(15)
         # Compare the public HTML, data, scripts and all web images with this commit.
-        files = [*ROOT.rglob('index.html'), *ROOT.glob('assets/**/*.webp'), ROOT / 'styles.css', ROOT / 'site.js', ROOT / 'catalogue/books.json', ROOT / 'sitemap.xml', ROOT / 'robots.txt']
-        def verify_file(file):
-            relative = file.relative_to(ROOT).as_posix()
-            remote = fetch(base + relative.removesuffix('index.html'))
-            assert hashlib.sha256(remote).digest() == hashlib.sha256(file.read_bytes()).digest(), f'Public bytes differ: {relative}'
-        with ThreadPoolExecutor(max_workers=6) as pool:
-            list(pool.map(verify_file, files))
+        files = [*ROOT.rglob('index.html'), *ROOT.glob('assets/**/*.webp'), ROOT / 'styles.css', ROOT / 'site.js', ROOT / 'discovery.js', ROOT / 'catalogue/books.json', ROOT / 'sitemap.xml', ROOT / 'robots.txt']
+        wait_for_live_files(base, files, args.wait_seconds)
         print(f'PASS: {len(files)} live HTML/data/script/image files match the deployment commit', flush=True)
     else:
         class QuietHandler(http.server.SimpleHTTPRequestHandler):
