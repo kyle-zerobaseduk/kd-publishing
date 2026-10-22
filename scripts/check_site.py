@@ -101,6 +101,17 @@ def check():
         if asset in allowed_pdfs:
             assert asset.stat().st_size < 100_000
             continue
+        relative = asset.relative_to(ROOT).as_posix()
+        if relative in {f'assets/campaigns/2026-10-growth/pin-{n:02}.jpg' for n in range(1,31)}:
+            assert asset.stat().st_size < 500_000, asset
+            with Image.open(asset) as image:
+                assert image.format == 'JPEG' and image.size == (1000, 1500), asset
+            continue
+        if relative in {f'assets/social/{r["slug"]}.webp' for r in __import__('build_resources').selected()}:
+            assert asset.stat().st_size < 500_000, asset
+            with Image.open(asset) as image:
+                assert image.format == 'WEBP' and image.size == (1200, 630), asset
+            continue
         assert asset.suffix == '.webp' and asset.stat().st_size < 500_000, asset
         with Image.open(asset) as image:
             assert max(image.size) <= 1300 and image.width <= 850, asset

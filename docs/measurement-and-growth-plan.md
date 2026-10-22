@@ -1,5 +1,7 @@
 # Measurement and commercial growth plan
 
+Historical 9 October plan. For the current 44-page, 26-book campaign, implemented resource events and release steps, see [30-day acquisition handoff](../marketing/2026-10-growth/README.md). Historical proposals and counts below are retained as the decision record, not assertions of current configuration.
+
 Prepared 9 October 2026. Account actions below are **proposals requiring owner approval**, not changes already made. Keep private traffic reports and KDP sales exports outside this public repository.
 
 ## Verified production measurement
