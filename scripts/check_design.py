@@ -76,7 +76,7 @@ def main():
                 if attribute in attrs:
                     assert all(value in ids for value in attrs[attribute].split()), (file, attribute)
             if node.tag == 'button':
-                assert attrs.get('type') == 'button', file
+                assert attrs.get('type') == 'button' or (attrs.get('type') == 'submit' and node.parent.tag == 'form' and 'data-review-form' in node.parent.attrs), file
                 assert attrs.get('aria-label') or node.content().strip(), f'Unnamed control: {file}'
             if node.tag == 'img' and 'src' in attrs:
                 image = (file.parent / attrs['src']).resolve()

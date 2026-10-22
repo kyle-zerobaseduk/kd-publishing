@@ -84,14 +84,15 @@ def check():
             assert config['book'] == {'id': b['id'], 'title': b.get('shortTitle') or b['title'], 'category': b['category'], 'asin': b['asin']}, b['id']
             can_buy = b['status'] == 'live' and b.get('amazonLinkEnabled', True)
             destination = b.get('amazonUrl') or f'https://www.amazon.co.uk/dp/{b["asin"]}'
-            assert parsed.amazon == ([destination] if can_buy else []), b['id']
-            assert len(parsed.amazon_buttons) == int(can_buy), b['id']
+            assert parsed.amazon == ([destination, destination] if can_buy else []), b['id']
+            assert len(parsed.amazon_buttons) == 2 * int(can_buy), b['id']
             if b['status'] == 'live' and not can_buy:
                 assert 'Amazon UK purchase link temporarily unavailable.' in markup, b['id']
             if can_buy:
-                button = parsed.amazon_buttons[0]
-                assert (button.get('data-book-id'), button.get('data-asin')) == (b['id'], b['asin']), b['id']
-                assert button.get('href') == parsed.amazon[0] and button.get('target') == '_blank', b['id']
+                for button in parsed.amazon_buttons:
+                    assert (button.get('data-book-id'), button.get('data-asin')) == (b['id'], b['asin']), b['id']
+                    assert button.get('href') == destination and button.get('target') == '_blank', b['id']
+                    assert set(button.get('rel', '').split()) >= {'noopener', 'noreferrer'}
             assert len([x for x in parsed.images if '/previews/' in x.get('src','') and x['alt'] != 'Preview button']) == len(b['previewPages'])
     allowed_pdfs = {ROOT / d['path'] for r in __import__('resource_content').ALL_RESOURCES for d in r['downloads']}
     assert set(ROOT.rglob('*.pdf')) <= allowed_pdfs and not list(ROOT.rglob('*.zip'))

@@ -87,9 +87,15 @@
       book_title: config.book.title,
       category: config.book.category,
       asin: config.book.asin,
-      destination_url: link.href
+      destination_url: link.href,
+      placement: link.dataset.placement || 'product_top'
     });
   }));
+  document.querySelector('[data-review-form]')?.addEventListener('submit', () => {
+    // Native POST continues through the provider's spam check. This is an
+    // attempt, never a claim of successful receipt, moderation or publication.
+    event('review_submit_attempt', { book_id: config.book.id });
+  });
   document.querySelectorAll('[data-resource-download]').forEach(link => link.addEventListener('click', () => {
     event('printable_download', { resource_id: link.dataset.resourceDownload, asset_id: link.dataset.assetId, destination_url: link.href });
   }));

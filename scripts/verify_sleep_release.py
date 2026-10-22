@@ -113,7 +113,9 @@ def main():
                         assert page.locator('h1').inner_text() == 'The 80-Day Sleep'
                         assert page.locator('.product-subtitle').inner_text() == 'A Daily Sleep Journal'
                         assert page.locator('.product-cover img').get_attribute('src').endswith(COVER)
-                        assert page.locator('.amazon-link').get_attribute('href') == AMAZON
+                        assert page.locator('.amazon-link').count() == 2
+                        for purchase in page.locator('.amazon-link').all():
+                            assert purchase.get_attribute('href') == AMAZON
                         assert page.locator('meta[property="og:image"]').get_attribute('content').endswith(COVER)
                         schema = page.locator('script[type="application/ld+json"]').first.text_content()
                         assert json.loads(schema)['identifier']['value'] == ASIN

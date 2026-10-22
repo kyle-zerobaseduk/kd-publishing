@@ -12,6 +12,11 @@ on:
       - 'scripts/**'
       - 'styles.css'
       - 'site.js'
+      - 'discovery.js'
+      - 'index.html'
+      - 'categories/**'
+      - 'about/**'
+      - 'privacy/**'
       - '.github/workflows/seo-validation.yml'
 
 permissions:
@@ -44,11 +49,8 @@ jobs:
           python scripts/check_site.py
           node scripts/test_tracking.js
           python scripts/check_design.py
-          if git diff --unified=0 "$BASE_SHA" HEAD -- catalogue/books.json | grep -q '^+.*"id":"80-day-sleep".*"assetVersion":"20261015"'; then
-            python scripts/check_seo.py --baseline-ref "$BASE_SHA" --updated-book 80-day-sleep
-          else
-            python scripts/check_seo.py --baseline-ref "$BASE_SHA"
-          fi
+          python scripts/check_seo.py --baseline-ref "$BASE_SHA" --growth-release
+          python scripts/test_reader_reviews.py
           python scripts/test_resource_template.py
           python scripts/check_resources.py
           python -m pip install playwright
@@ -62,6 +64,11 @@ jobs:
           CHROME_PATH: /usr/bin/google-chrome
           KD_REPORT_DIR: ${{ runner.temp }}/kd-resource-reports
         run: node scripts/check_resource_browser.mjs
+      - name: Check catalogue discovery and conversion events
+        env:
+          KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules
+          CHROME_PATH: /usr/bin/google-chrome
+        run: node scripts/check_growth_browser.mjs
       - name: Check catalogue releases on mobile and desktop
         env:
           KD_LIGHTHOUSE_MODULE_DIR: ${{ runner.temp }}/kd-lighthouse/node_modules

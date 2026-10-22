@@ -302,3 +302,32 @@ p { margin: 0 0 1.25rem; }
   .consent-actions .button { flex: 1; color: var(--ink); background: transparent; border-color: #758580; }
   .consent-actions .button:hover { color: var(--ink); background: var(--shelf); border-color: var(--ink); }
 }
+
+/* Reader discovery and moderated feedback; preserve the established palette. */
+.catalogue-tools { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 1rem; align-items: end; margin: 1.5rem 0 2rem; padding: 1.5rem; background: var(--shelf); }
+.catalogue-tools label, .reader-review-form > label { display: block; font-weight: 600; margin-bottom: .5rem; }
+.catalogue-tools input, .catalogue-tools select, .reader-review-form textarea, .reader-review-form > input { width: 100%; min-width: 0; min-height: 48px; padding: .7rem; border: 1px solid var(--muted); background: var(--white); color: var(--ink); font: inherit; border-radius: 0; }
+#book-result-count { grid-column: 1 / -1; margin: 0; }
+.resource-teasers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
+.resource-teaser { border-top: 1px solid var(--teal); padding-top: 1.3rem; }
+.resource-teaser h3 { font-size: 1.5rem; line-height: 1.25; margin: .8rem 0; }
+.resource-teaser p { color: var(--muted); }
+.resource-teaser a { text-decoration-thickness: 1px; text-underline-offset: .2em; }
+.after-preview { display: flex; gap: 1.5rem; align-items: center; justify-content: space-between; border-top: 1px solid var(--muted); margin-top: 2.5rem; padding-top: 1.8rem; }
+.after-preview h3 { margin: 0 0 .5rem; font-size: 1.6rem; }
+.after-preview p { margin: 0; }
+.after-preview .button { flex-shrink: 0; }
+.reader-reviews { max-width: 900px; }
+.reader-review { padding: 1.5rem 0; border-bottom: 1px solid var(--muted); }
+.review-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.reader-review-form { margin-top: 2rem; }
+.reader-review-form fieldset { margin: 1.5rem 0; padding: 1rem; border: 1px solid var(--muted); }
+.rating-options { display: flex; flex-wrap: wrap; gap: 1rem; }
+.rating-options label, .review-consent { min-height: 44px; padding: .65rem 0; }
+.reader-review-form textarea, .reader-review-form > input { margin-bottom: 1.25rem; }
+.reader-review-form input[type="radio"], .reader-review-form input[type="checkbox"] { width: 1.25rem; height: 1.25rem; accent-color: var(--teal); vertical-align: middle; }
+@media (max-width: 800px) {
+  .resource-teasers { grid-template-columns: 1fr; }
+  .catalogue-tools { grid-template-columns: minmax(0, 1fr); }
+  .after-preview { align-items: stretch; flex-direction: column; }
+}
