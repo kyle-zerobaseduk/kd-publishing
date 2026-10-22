@@ -7,6 +7,9 @@ on:
       - 'content/**'
       - 'assets/resources/**'
       - 'assets/responsive/**'
+      - 'assets/social/**'
+      - 'assets/campaigns/**'
+      - 'marketing/**'
       - 'books/**'
       - 'catalogue/**'
       - 'scripts/**'
@@ -53,6 +56,7 @@ jobs:
           python scripts/test_reader_reviews.py
           python scripts/test_resource_template.py
           python scripts/check_resources.py
+          python scripts/check_campaign.py
           python -m pip install playwright
           python scripts/test_live_release_wait.py
           python scripts/verify_sleep_release.py --report-dir "$RUNNER_TEMP/kd-sleep-reports"

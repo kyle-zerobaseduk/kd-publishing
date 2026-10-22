@@ -67,7 +67,9 @@ def build_resources():
   # No claimed publication date while content remains awaiting owner release.
   schemas=[{'@context':'https://schema.org','@type':'Article','headline':r['title'],'description':r['summary'],'inLanguage':'en-GB','url':canonical,'mainEntityOfPage':canonical,'author':{'@type':'Organization','name':'K.D.Publishing editorial'},'publisher':{'@type':'Organization','name':'K.D.Publishing'}},{'@context':'https://schema.org','@type':'BreadcrumbList','itemListElement':[{'@type':'ListItem','position':i,'name':n,'item':u} for i,(n,u) in enumerate(crumbs,1)]}]
   structured=''.join('<script type="application/ld+json">'+json.dumps(s,ensure_ascii=False).replace('<','\\u003c')+'</script>' for s in schemas)
-  shell(route(r),r['seoTitle'],r['description'],render_resource(r),image=cover_path(next(b for b in BOOKS if b['id']==r['relatedBookIds'][0])),resource={'id':r['slug'],'cluster':r['cluster']},extra_structured=structured)
+  # Represent the promised free resource when shared, rather than a paid book cover.
+  social_image=f'assets/social/{r["slug"]}.webp'
+  shell(route(r),r['seoTitle'],r['description'],render_resource(r),image=social_image if (ROOT/social_image).exists() else cover_path(next(b for b in BOOKS if b['id']==r['relatedBookIds'][0])),resource={'id':r['slug'],'cluster':r['cluster']},extra_structured=structured)
  return ['resources/index.html']+[f'resources/{c}/index.html' for c in CLUSTERS]+[route(r) for r in rows]
 
 def book_resources(bid,pre):
