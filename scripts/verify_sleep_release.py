@@ -16,6 +16,9 @@ from urllib.request import Request, urlopen
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
+CATALOGUE = json.loads((ROOT / 'catalogue/books.json').read_text())
+LATEST_BOOK = max((b for b in CATALOGUE if b['status'] == 'live'),
+                  key=lambda b: b.get('catalogueAdded') or b.get('released') or '')['id']
 TARGETS = ['', 'books/', 'categories/journals/', 'latest/', 'books/80-day-sleep/']
 COVER = 'assets/covers/80-day-sleep-20261015.webp'
 ASIN = 'B0HN65B19G'
@@ -105,7 +108,7 @@ def main():
                         assert card.count() == 1, target
                         assert card.locator('img').get_attribute('src').endswith(COVER)
                         if target in ['', 'latest/']:
-                            assert page.locator('a.book-card').first.get_attribute('href').endswith('books/80-day-sleep/')
+                            assert page.locator('a.book-card').first.get_attribute('href').endswith(f'books/{LATEST_BOOK}/')
                     else:
                         assert page.locator('h1').inner_text() == 'The 80-Day Sleep'
                         assert page.locator('.product-subtitle').inner_text() == 'A Daily Sleep Journal'
@@ -168,7 +171,7 @@ def main():
             assert next(e for e in events if e['name'] == 'amazon_click')['params']['destination_url'] == AMAZON
             context.close()
             browser.close()
-        result = {'base_url': base, 'live': bool(args.base_url), 'commit': os.environ.get('GITHUB_SHA'), 'catalogue_count': 25, 'checks': checks, 'events': events, 'result': 'pass'}
+        result = {'base_url': base, 'live': bool(args.base_url), 'commit': os.environ.get('GITHUB_SHA'), 'catalogue_count': len(CATALOGUE), 'checks': checks, 'events': events, 'result': 'pass'}
         (args.report_dir / 'results.json').write_text(json.dumps(result, indent=2))
         print('PASS: 30 responsive page checks; blue cover, real previews, catalogue visibility, purchase URL, SEO, consent and three edition-specific GA4 events', flush=True)
     finally:
