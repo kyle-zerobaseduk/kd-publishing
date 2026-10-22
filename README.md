@@ -78,3 +78,20 @@ No changes to the separate Pinterest automation repository are part of this proj
 ## Phase 2B draft resources
 
 Six original resources and eight limited A4 free printables are developed for owner review in the Phase 2B branch. They are not deployed. Read [the implementation and controlled release instructions](docs/phase-2b-implementation.md). The earlier [Phase 2B architecture](docs/phase-2b-resources.md) records the Phase 2A planning checkpoint, not the current build state. Choose `all` or `priority` in `content/resource-release.json` before an approved release. Source content approval remains pending; no owner-approval flag is fabricated.
+
+## Book 26 catalogue addition (22 October 2026)
+
+`easy-word-search-for-dementia` adds **Easy Word Search for Dementia** by Kyle Dyer, K.D.Publishing, paperback, owner-confirmed live ASIN `B0HNTX86GX`. The full subtitle is transcribed from the approved interior title page: **60 Extra Large Print British Puzzles in 4 Gentle Levels with Familiar UK Themes and Conversation Prompts for Adults and Their Carers**. The website addition date is not a publication-date claim. The owner supplied a UK price of £9.99 and submission date of 21 October; neither is presented as a current public offer or publication date.
+
+The approved sources are `Dementia_Word_Search_KDP_Cover_FINAL_v3_No_White_Patch.pdf` and `Easy_Word_Search_for_Dementia_114pp_FINAL_QR_Interior.pdf`. The cover checksum matches the Drive revision-3 validation record dated 21 October. Its cream back-cover correction is preserved in the private master; the website uses only the trim-sized front panel. The interior has 114 pages at 8.5 × 11 inches. Genuine samples use PDF pages 8 (Gentle), 24 (Easy), 45 (Steady), 61 (optional Challenge) and 71 (answers to puzzles 1–2). Only one 740-pixel-wide front-cover WebP and five 850-pixel-wide sample WebPs are public. No production PDF is committed.
+
+The approved pages support 60 puzzles, four selectable levels, familiar UK themes, optional conversation prompts, across/down-only listed words and included answers. Copy makes no medical-benefit claim and does not assign difficulty to a clinical dementia stage.
+
+Amazon verification on 22 October: web retrieval could not access the destination; the cloud browser displayed “We do not support your session or client.” Therefore the exact destination `https://www.amazon.co.uk/dp/B0HNTX86GX` and verified ASIN are retained, but **`amazonLinkEnabled: false`** withholds the purchase button. The rendered Amazon title, selected paperback and buyability were not independently verified. Enable the flag only after a supported normal-session check confirms the matching paperback and full listing metadata. This restriction does not establish a fault with the listing.
+
+The existing builder supplies catalogue/category/latest-release integration, canonical URL, Book and BreadcrumbList metadata, sitemap and consent-controlled book/preview tracking. The Amazon-click implementation is preserved and ready for later link activation; a disabled purchase button cannot generate an Amazon-click event. All 25 previous records, product HTML pages, existing asset bytes, CSS, consent/analytics code and Search Console verification are protected by baseline checks. The existing responsive workflow includes the new page and puzzle category at 320, 360, 390, 768, 1024 and 1440 pixels. Owner authorisation for this controlled branch/PR/merge/deployment was supplied in the Book 26 release request.
+
+Private-source SHA-256 references (source bytes remain outside the repository):
+
+- Cover: `6932cbb0a4de6dce2d737b9eddf1dfc4a187e320789e0f5cdd2570ccf0371e65`
+- Interior: `7777166db17cffd6fd1f7efb6764081e2854f8d458014f84881866e6526f43ea`
