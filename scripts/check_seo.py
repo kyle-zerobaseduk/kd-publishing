@@ -50,6 +50,7 @@ class Page(HTMLParser):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--baseline-ref')
+    parser.add_argument('--growth-release', action='store_true', help='Authorised shared-template improvements; protect catalogue, assets and product content semantically')
     parser.add_argument('--updated-book', choices=['80-day-sleep'], help='Explicit edition update, with all other books protected')
     args = parser.parse_args()
     baseline = args.baseline_ref
@@ -149,6 +150,8 @@ def main():
             markup=markup.replace('book views, resource views, printable download clicks, related-book clicks, preview opens', 'book views, preview opens')
             return markup
         for path in pages:
+            if args.growth_release:
+                continue  # Dedicated semantic preservation below replaces exact template bytes.
             if path.is_relative_to(ROOT/'resources'): continue
             relative = path.relative_to(ROOT).as_posix()
             if additions:
@@ -168,7 +171,11 @@ def main():
                 assert path.read_text() == previous, f'Existing page changed during catalogue addition: {path}'
             else:
                 assert protected(path.read_text())==protected(previous), f'Protected HTML changed beyond declared nav/config/related links/cover hints/privacy additions: {path}'
-        print(f'PASS: all {len(before)} existing catalogue records, ASINs, Amazon destinations, original assets, verification token and base CSS exact; {len(additions)} added books; protected HTML unchanged outside declared additions')
+        if args.growth_release:
+            from check_growth_preservation import check
+            check(baseline)
+        else:
+            print(f'PASS: all {len(before)} existing catalogue records, ASINs, Amazon destinations, original assets, verification token and base CSS exact; {len(additions)} added books; protected HTML unchanged outside declared additions')
         if activated:
             print('PASS: Book 26 owner-confirmed link activation only; all other record fields and page content exact')
     for r in selected():

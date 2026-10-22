@@ -95,3 +95,9 @@ Private-source SHA-256 references (source bytes remain outside the repository):
 
 - Cover: `6932cbb0a4de6dce2d737b9eddf1dfc4a187e320789e0f5cdd2570ccf0371e65`
 - Interior: `7777166db17cffd6fd1f7efb6764081e2854f8d458014f84881866e6526f43ea`
+
+## Website growth release (22 October 2026)
+
+See [the audit and measurement runbook](docs/website-growth-runbook.md) and [reader feedback activation/moderation](docs/reader-feedback-setup.md). PR #12 already enabled Book 26's owner-confirmed Amazon UK link; the older Book 26 paragraph above is historical.
+
+This release keeps all 26 records and original assets, adds responsive covers, catalogue discovery, contextual resources and a purchase action after previews. `python scripts/generate_responsive_covers.py` rebuilds the additional small covers. `python scripts/check_seo.py --baseline-ref origin/main --growth-release` uses semantic product/resource preservation for authorised template improvements; the original stricter modes remain available. Review service activation is a separate controlled change. No new accounts or paid services are created by the build.

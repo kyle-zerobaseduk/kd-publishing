@@ -113,7 +113,9 @@ def main():
                         assert page.locator('h1').inner_text() == 'The 80-Day Sleep'
                         assert page.locator('.product-subtitle').inner_text() == 'A Daily Sleep Journal'
                         assert page.locator('.product-cover img').get_attribute('src').endswith(COVER)
-                        assert page.locator('.amazon-link').get_attribute('href') == AMAZON
+                        assert page.locator('.amazon-link').count() == 2
+                        for purchase in page.locator('.amazon-link').all():
+                            assert purchase.get_attribute('href') == AMAZON
                         assert page.locator('meta[property="og:image"]').get_attribute('content').endswith(COVER)
                         schema = page.locator('script[type="application/ld+json"]').first.text_content()
                         assert json.loads(schema)['identifier']['value'] == ASIN
@@ -161,8 +163,8 @@ def main():
             page.locator('[data-consent="accept"]').click()
             page.locator('[data-preview]').nth(1).click()
             page.keyboard.press('Escape')
-            page.locator('.amazon-link').evaluate("e => e.addEventListener('click', x => x.preventDefault())")
-            page.locator('.amazon-link').click()
+            page.locator('.amazon-link').first.evaluate("e => e.addEventListener('click', x => x.preventDefault())")
+            page.locator('.amazon-link').first.click()
             events = page.evaluate("window.dataLayer.filter(x => x[0] === 'event').map(x => ({name:x[1],params:x[2]}))")
             for name in ['book_page_view', 'preview_open', 'amazon_click']:
                 found = [e for e in events if e['name'] == name]
