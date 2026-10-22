@@ -163,8 +163,8 @@ def main():
             page.locator('[data-consent="accept"]').click()
             page.locator('[data-preview]').nth(1).click()
             page.keyboard.press('Escape')
-            page.locator('.amazon-link').evaluate("e => e.addEventListener('click', x => x.preventDefault())")
-            page.locator('.amazon-link').click()
+            page.locator('.amazon-link').first.evaluate("e => e.addEventListener('click', x => x.preventDefault())")
+            page.locator('.amazon-link').first.click()
             events = page.evaluate("window.dataLayer.filter(x => x[0] === 'event').map(x => ({name:x[1],params:x[2]}))")
             for name in ['book_page_view', 'preview_open', 'amazon_click']:
                 found = [e for e in events if e['name'] == name]

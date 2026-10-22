@@ -47,6 +47,7 @@ def render_resource(r):
 
 def build_resources():
  from build import shell,titleblock,e,url,BOOKS
+ from book_assets import cover_path
  rows=selected()
  # Remove managed stale routes when making a priority-only release. Source records stay for later development.
  for r in ALL_RESOURCES:
@@ -58,7 +59,7 @@ def build_resources():
  for cluster,label in CLUSTERS.items():
   subset=[r for r in rows if r['cluster']==cluster]
   main=titleblock('Free resources',label,'Practical resources to use today, with optional links to relevant books.')+'<section class="container prose section resource-article">'+''.join(f'<section><h2><a href="{r["slug"]}/">{e(r["title"])}</a></h2><p>{e(r["summary"])}</p></section>' for r in subset)+'</section>'
-  shell(f'resources/{cluster}/index.html',label,f'Browse K.D.Publishing {label.lower()}: original guides and useful free printables.',main)
+  shell(f'resources/{cluster}/index.html',label,f'Browse K.D.Publishing {label.lower()}: original guides and useful free printables.',main, image=cover_path(next(b for b in BOOKS if b['id']==subset[0]['relatedBookIds'][0])))
  main=titleblock('Useful things, freely available','Resources','Football session plans, printable puzzles and thoughtful workplace gift advice. Use each resource without buying a book.')+'<section class="container prose section resource-article">'+''.join(f'<section><h2><a href="{cluster}/">{e(label)}</a></h2><ul>'+''.join(f'<li><a href="{cluster}/{r["slug"]}/">{e(r["title"])}</a></li>' for r in rows if r['cluster']==cluster)+'</ul></section>' for cluster,label in CLUSTERS.items())+'</section>'
  shell('resources/index.html','Free resources: football, puzzles and gifts','Explore original football coaching guides, free A4 word searches with answers and practical workplace gift advice from K.D.Publishing.',main)
  for r in rows:
@@ -66,7 +67,7 @@ def build_resources():
   # No claimed publication date while content remains awaiting owner release.
   schemas=[{'@context':'https://schema.org','@type':'Article','headline':r['title'],'description':r['summary'],'inLanguage':'en-GB','url':canonical,'mainEntityOfPage':canonical,'author':{'@type':'Organization','name':'K.D.Publishing editorial'},'publisher':{'@type':'Organization','name':'K.D.Publishing'}},{'@context':'https://schema.org','@type':'BreadcrumbList','itemListElement':[{'@type':'ListItem','position':i,'name':n,'item':u} for i,(n,u) in enumerate(crumbs,1)]}]
   structured=''.join('<script type="application/ld+json">'+json.dumps(s,ensure_ascii=False).replace('<','\\u003c')+'</script>' for s in schemas)
-  shell(route(r),r['seoTitle'],r['description'],render_resource(r),resource={'id':r['slug'],'cluster':r['cluster']},extra_structured=structured)
+  shell(route(r),r['seoTitle'],r['description'],render_resource(r),image=cover_path(next(b for b in BOOKS if b['id']==r['relatedBookIds'][0])),resource={'id':r['slug'],'cluster':r['cluster']},extra_structured=structured)
  return ['resources/index.html']+[f'resources/{c}/index.html' for c in CLUSTERS]+[route(r) for r in rows]
 
 def book_resources(bid,pre):

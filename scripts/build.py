@@ -132,7 +132,7 @@ def shell(path, title, description, main, image=None, book=None, resource=None, 
     image = image or 'assets/covers/high-fantasy-realms.webp'
     canonical = f'<link rel="canonical" href="{e(url(path))}">' if ORIGIN else ''
     ogurl = f'<meta property="og:url" content="{e(url(path))}">' if ORIGIN else ''
-    ogimage = f'<meta property="og:image" content="{e(url(image) if ORIGIN else pre + image)}"><meta property="og:image:alt" content="{e(short_title(book) + chr(32) + "front cover" if book else title)}">' if image else ''
+    ogimage = f'<meta property="og:image" content="{e(url(image) if ORIGIN else pre + image)}"><meta property="og:image:alt" content="{e(short_title(book) + " front cover" if book else title)}">' if image else ''
     structured = ''
     structured += extra_structured
     if book:
