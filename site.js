@@ -22,6 +22,13 @@
   ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(k => {
     if (params.has(k)) campaign[k] = params.get(k).slice(0, 100);
   });
+  // Opt-in internal flag for the owner's own browsers: ?kd_internal=1 sets it, ?kd_internal=0 clears it.
+  try {
+    if (params.get('kd_internal') === '1') localStorage.setItem('kd_internal', '1');
+    else if (params.get('kd_internal') === '0') localStorage.removeItem('kd_internal');
+  } catch {}
+  let internal = false;
+  try { internal = localStorage.getItem('kd_internal') === '1'; } catch {}
   const banner = document.getElementById('cookie-notice');
   const validId = /^G-[A-Z0-9]+$/.test(config.ga4);
   let active = false;
@@ -45,7 +52,7 @@
     window.dataLayer = window.dataLayer || [];
     window.gtag = function () { window.dataLayer.push(arguments); };
     window.gtag('js', new Date());
-    window.gtag('config', config.ga4, { send_page_view: false });
+    window.gtag('config', config.ga4, internal ? { send_page_view: false, traffic_type: 'internal' } : { send_page_view: false });
     const script = document.createElement('script');
     script.async = true;
     script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(config.ga4);
@@ -109,7 +116,10 @@
       dialog.querySelector('img').alt = button.querySelector('img').alt;
       dialog.querySelector('p').textContent = 'Actual interior sample · Page ' + button.dataset.page;
       dialog.showModal();
-      event('preview_open', { book_id: config.book.id, book_title: config.book.title, category: config.book.category, asin: config.book.asin || '', page_number: Number(button.dataset.page) });
+      event('preview_open', { book_id: config.book.id, book_title: config.book.title, category: config.book.category, asin: config.book.asin || '', page_number: Number(button.dataset.page), preview_source: 'thumbnail' });
+    }));
+    document.querySelectorAll('a[href="#inside"]').forEach(link => link.addEventListener('click', () => {
+      event('preview_open', { book_id: config.book.id, book_title: config.book.title, category: config.book.category, asin: config.book.asin || '', page_number: 0, preview_source: 'look_inside_link' });
     }));
     dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
     dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
