@@ -51,7 +51,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--baseline-ref')
     parser.add_argument('--growth-release', action='store_true', help='Authorised shared-template improvements; protect catalogue, assets and product content semantically')
-    parser.add_argument('--updated-book', choices=['80-day-sleep'], help='Explicit edition update, with all other books protected')
+    parser.add_argument('--updated-book', choices=['80-day-sleep', 'travel-comfort-covers'], help='Explicit edition update, with all other books protected')
     args = parser.parse_args()
     baseline = args.baseline_ref
     pages = {p: Page(p.read_text()) for p in ROOT.rglob('index.html')}
@@ -114,7 +114,10 @@ def main():
     except ValueError:
         pass
     if baseline and args.updated_book:
-        from check_edition_preservation import check
+        if args.updated_book == 'travel-comfort-covers':
+            from check_travel_comfort_preservation import check
+        else:
+            from check_edition_preservation import check
         check(baseline)
     if baseline and not args.updated_book:
         def old(path):

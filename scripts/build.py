@@ -110,7 +110,7 @@ def cover(book, pre, loading='lazy'):
         width, height = webp_size(image)
         small = f'assets/responsive/{Path(image_path).stem}-370.webp'
         responsive = f' srcset="{pre}{small} 370w, {pre}{image_path} {width}w" sizes="(max-width: 600px) 70vw, (max-width: 800px) 40vw, 370px"' if (ROOT / small).exists() else ''
-        return f'<img{responsive} src="{pre}{image_path}" alt="Front cover of {e(short_title(book))}" width="{width}" height="{height}" loading="{loading}"{(' fetchpriority="high"' if loading == 'eager' else '')}>'
+        return f'<img{responsive} src="{pre}{image_path}" alt="{e(book.get('coverAlt', 'Front cover of ' + short_title(book)))}" width="{width}" height="{height}" loading="{loading}"{(' fetchpriority="high"' if loading == 'eager' else '')}>'
     return f'<div class="cover-pending" role="img" aria-label="Cover artwork pending for {e(short_title(book))}"><span>K.D.PUBLISHING</span><strong>{e(short_title(book))}</strong><small>Cover image pending</small></div>'
 
 
