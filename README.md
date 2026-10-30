@@ -101,3 +101,16 @@ Private-source SHA-256 references (source bytes remain outside the repository):
 See [the audit and measurement runbook](docs/website-growth-runbook.md) and [reader feedback activation/moderation](docs/reader-feedback-setup.md). PR #12 already enabled Book 26's owner-confirmed Amazon UK link; the older Book 26 paragraph above is historical.
 
 This release keeps all 26 records and original assets, adds responsive covers, catalogue discovery, contextual resources and a purchase action after previews. `python scripts/generate_responsive_covers.py` rebuilds the additional small covers. `python scripts/check_seo.py --baseline-ref origin/main --growth-release` uses semantic product/resource preservation for authorised template improvements; the original stricter modes remain available. Review service activation is a separate controlled change. No new accounts or paid services are created by the build.
+
+
+## Travel and Comfort Food cover update — 30 October 2026
+
+The owner's current Bookshelf screenshot confirms Travel & World Cities (`B0HDYP1JF2`) and Comfort Food & Baking (`B0HFD1G62R`) as live paperbacks with the existing catalogue titles and subtitles. Both direct Amazon UK destinations are retained. Automated retailer requests returned HTTP 503 during this release; no live retail availability or price is asserted.
+
+The Travel derivative is reduced from `Travel_World_Cities_COVER_V4_FRONT_PREVIEW.png` (2550 × 3300), matching the screenshot's navy/gold globe and landmarks. The Comfort Food derivative uses the photographic `Comfort Food & Baking Puzzle Book Cover.png` (1536 × 1024), matching the screenshot; its front panel is cropped at `(807, 0, 1536, 1024)` without stretching. The older illustrated front preview is intentionally excluded. Private source images and the Bookshelf screenshot stay outside the repository. Only reduced website derivatives are public.
+
+The new `coverImage` paths include `20261030` to avoid stale image caches. `coverSource` is null for these PNG-based exports so the PDF exporter cannot overwrite them using an older wrap; existing interior sources and samples are unchanged. The desktop derivatives are 740 × 958 and 729 × 1024, with 370-pixel responsive variants. No print-resolution claim is made.
+
+The descriptions state 100 puzzles and a full answer key, with no invented print-size, difficulty or educational claims. The two original titles/subtitles, ASINs, page URLs, interior samples, tracking IDs and destinations remain unchanged.
+
+Validation: `python scripts/check_seo.py --baseline-ref <deployment-baseline> --updated-book travel-comfort-covers` runs the dedicated two-record preservation check. The existing CI retains its other checks and adds both book pages to its 320–1440 px responsive targets.
