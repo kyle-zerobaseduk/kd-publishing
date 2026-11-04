@@ -114,3 +114,18 @@ The new `coverImage` paths include `20261030` to avoid stale image caches. `cove
 The descriptions state 100 puzzles and a full answer key, with no invented print-size, difficulty or educational claims. The two original titles/subtitles, ASINs, page URLs, interior samples, tracking IDs and destinations remain unchanged.
 
 Validation: `python scripts/check_seo.py --baseline-ref <deployment-baseline> --updated-book travel-comfort-covers` runs the dedicated two-record preservation check. The existing CI retains its other checks and adds both book pages to its 320–1440 px responsive targets.
+
+
+## Dinosaur website addition — 4 November 2026
+
+Adds the owner-confirmed live paperback, ASIN B0HPTPBR9C, through the existing catalogue builder. The publication date is unknown; catalogueAdded records this website addition only. The KDP-reported £8.99 is not represented as a current retail offer. No reviews, ratings or sales claims are added.
+
+Private Phase 8B sources were recovered from the owner-review package (not stored in this repository):
+
+- Cover: `KD_Dinosaur_KDP_Full_Wrap_No_White_Box.pdf`, SHA-256 `3f3bd9d8c2b35525a50d6e772d0758516bff378f7501aac4cadfae922cc419c0`. Yellow/green T. rex, no white square.
+- Interior: `KD_Dinosaur_Colouring_Discovery_KDP_Interior.pdf`, SHA-256 `ad2f4c4a431da2731682dd411283771e6a6666be30b0fadd323f2009c87b9deb`, 100 pages, 612 × 792 pt.
+- Exported via `generate_assets.py --book dinosaur-colouring-and-discovery` from those sources: trim-cropped front cover, genuine PDF pages 5 (Triceratops), 59 (Tyrannosaurus rex), 87 (Spinosaurus), 91 (Microraptor). Small WebP samples only; 370 px responsive cover uses the existing derivative settings.
+
+Amazon UK returned a client/session rejection on initial visit and one reload. Independent title/format/ASIN matching is unverified, so `amazonLinkEnabled` stays false. The owner confirmed KDP LIVE; that statement does not certify the currently served retail listing, a physical proof, or which exact master pair was uploaded. Enable the button only after an ordinary retail check confirms this paperback at `https://www.amazon.co.uk/dp/B0HPTPBR9C`.
+
+All 26 previous records, assets and product pages remain exact. Related-book matching respects an optional audience so this children's colouring addition does not automatically recommend the existing adult colouring title. The CI now uses the existing strict catalogue-addition preservation mode rather than the previous two-cover-change mode; its remaining checks are retained and responsive targets include Dinosaur and the colouring shelf. Existing GA4/consent scripts and settings are unchanged. Phase 8B quality findings remain in the private production records.
