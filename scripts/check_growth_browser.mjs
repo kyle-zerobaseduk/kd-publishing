@@ -44,7 +44,8 @@ try {
   await page.click('#clear-search');
   assert.equal(await page.evaluate(()=>document.activeElement.id),'book-search');
   await page.select('#book-sort','newest');
-  assert.match(await page.$eval('.book-card',e=>e.href),/easy-word-search-for-dementia/);
+  const newest = [...books].sort((a,b)=>(b.catalogueAdded || b.released || '').localeCompare(a.catalogueAdded || a.released || ''))[0];
+  assert.equal(await page.$eval('.book-card',e=>new URL(e.href).pathname),`/books/${newest.id}/`);
   await page.select('#book-sort','title');
   const titles = await page.$$eval('.book-card',nodes=>nodes.map(n=>n.dataset.title));
   assert.deepEqual(titles,[...titles].sort((a,b)=>a.localeCompare(b,'en')));
@@ -62,22 +63,33 @@ try {
     await page.goto(base+'/books/'+book.id+'/',{waitUntil:'networkidle0'});
     assert.equal(await page.$$eval('form',nodes=>nodes.length),0,'No inactive review form');
     const expected=book.amazonUrl || `https://www.amazon.co.uk/dp/${book.asin}`;
-    assert.deepEqual(await page.$$eval('.amazon-link',nodes=>nodes.map(n=>n.href)),[expected,expected]);
+    const canBuy = book.status === 'live' && book.amazonLinkEnabled !== false;
+    assert.deepEqual(await page.$$eval('.amazon-link',nodes=>nodes.map(n=>n.href)),canBuy ? [expected,expected] : []);
     assert.equal(await page.evaluate(()=>window.dataLayer===undefined),true);
     await page.click('[data-consent="accept"]');
     // Cancel external navigation only in the test; leave the click handler under test intact.
     await page.$$eval('.amazon-link',nodes=>nodes.forEach(n=>n.addEventListener('click',e=>e.preventDefault())));
-    await page.click('.amazon-link[data-placement="after_preview"]');
+    await page.click('[data-preview]');
+    await page.keyboard.press('Escape');
+    if(canBuy) await page.click('.amazon-link[data-placement="after_preview"]');
     const events=await page.evaluate(()=>window.dataLayer.filter(e=>e[0]==='event').map(e=>({name:e[1],params:e[2]})));
-    assert.equal(events.filter(e=>e.name==='amazon_click').length,1);
-    assert.equal(events.find(e=>e.name==='amazon_click').params.placement,'after_preview');
-    assert.equal(events.find(e=>e.name==='amazon_click').params.destination_url,expected);
+    assert.equal(events.filter(e=>e.name==='amazon_click').length,Number(canBuy));
+    if(canBuy){
+      assert.equal(events.find(e=>e.name==='amazon_click').params.placement,'after_preview');
+      assert.equal(events.find(e=>e.name==='amazon_click').params.destination_url,expected);
+    } else {
+      assert.match(await page.$eval('.review-note',e=>e.textContent),/purchase link temporarily unavailable/);
+    }
+    const preview = events.filter(e=>e.name==='preview_open');
+    assert.equal(preview.length,1);
+    assert.equal(preview[0].params.book_id,book.id);
+    assert.equal(preview[0].params.asin,book.asin);
     assert.equal(events.filter(e=>e.name==='book_page_view').length,1);
     await page.evaluate(()=>localStorage.clear());
-    if(book.id==='easy-word-search-for-dementia'){
+    if(['easy-word-search-for-dementia','dinosaur-colouring-and-discovery'].includes(book.id)){
       await page.addScriptTag({content:axe});
       violations=await page.evaluate(async()=>(await axe.run(document)).violations);
-      assert.deepEqual(violations.map(v=>v.id),[],'Book 26 accessibility');
+      assert.deepEqual(violations.map(v=>v.id),[],`${book.id} accessibility`);
     }
   }
   // Isolated form fixture: validation/layout only. No actual submission or external data.
@@ -92,5 +104,5 @@ try {
   assert.equal(await page.$eval('#review-name',e=>e.required),false);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
   assert.deepEqual(errors,[]);
-  console.log('PASS: catalogue search/sort/reset/no-JS, 26 preserved purchase destinations, one consented event per click, disabled review gate and isolated form validation');
+  console.log(`PASS: catalogue search/sort/reset/no-JS, ${books.filter(b=>b.status==='live' && b.amazonLinkEnabled!==false).length} purchase destinations, disabled purchase gates, one consented event per click for all ${books.length} books, disabled review gate and isolated form validation`);
 } finally {await browser.close(); await new Promise(r=>server.close(r));}

@@ -23,5 +23,5 @@ def related_books(book, books):
         ['first-time-football-coach', 'season-planner'],
     ]
     preferred = next((g for g in groups if book['id'] in g), [])
-    candidates = [b for b in books if b['id'] != book['id'] and b['category'] == book['category']]
+    candidates = [b for b in books if b['id'] != book['id'] and b['category'] == book['category'] and b.get('audience') == book.get('audience')]
     return sorted(candidates, key=lambda b: (b['id'] not in preferred, preferred.index(b['id']) if b['id'] in preferred else 99))[:3]
