@@ -86,7 +86,7 @@ def main():
     for book in BOOKS:
         path = ROOT / 'books' / book['id'] / 'index.html'
         page = pages[path]
-        assert page.h1 == book['title']
+        assert page.h1 == book.get('pageHeading', book['title'])
         assert page.title == book['seoTitle'] + ' | K.D.Publishing'
         # A review guard, not a Google character limit or ranking promise.
         assert len(page.title) <= 65

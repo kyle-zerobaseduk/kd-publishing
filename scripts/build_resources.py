@@ -21,7 +21,10 @@ def render_resource(r):
   for d in r['downloads']:
    size=(ROOT/d['path']).stat().st_size
    body+=f'<p><a class="text-link" href="{pre}{e(d["path"])}" data-resource-download="{e(r["slug"])}" data-asset-id="{e(d["path"].split("/")[-1])}">{e(d["label"])}</a><br><small>PDF · {max(1,round(size/1024))} KB · {e(d["printNotes"])}</small></p>'
-  body+='<p>The PDF opens directly. You can then save or print it.</p></section>'
+  body+='<p>The PDF opens directly. You can then save or print it.</p>'
+  if r['slug']=='u8-small-squad-training-session':
+   body+=f'<p>Want a whole season planned? <a class="text-link" href="{pre}books/season-planner/" data-related-book="season-planner" data-resource-id="{e(r["slug"])}">U7 &amp; U8 Season Planner</a> · 24 guided weeks of 60-minute sessions</p>'
+  body+='</section>'
  for i,s in enumerate(r['sections']):
   body+=f'<section><h2 id="section-{i+1}">{e(s["heading"])}</h2>'
   body+=''.join(f'<p>{e(p)}</p>' for p in s['paragraphs'])

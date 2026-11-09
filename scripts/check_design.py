@@ -90,7 +90,7 @@ def main():
         if file.parent.parent.name == 'books':
             book = next(b for b in BOOKS if b['id'] == file.parent.name)
             h1 = next(n for n in tree.nodes if n.tag == 'h1')
-            assert h1.content() == book['title'], file
+            assert h1.content() == book.get('pageHeading', book['title']), file
             lead = next(n for n in tree.nodes if n.attrs.get('class') == 'lead')
             assert lead.content() == book.get('productDescription', book['description']), file
             subtitles = [n for n in tree.nodes if n.attrs.get('class') == 'product-subtitle']

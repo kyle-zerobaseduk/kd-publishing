@@ -56,7 +56,7 @@ def check():
     assert len({b['asin'] for b in books if b['asin']}) == live
     planner = next(b for b in books if b['id'] == 'season-planner')
     assert planner['asin'] == 'B0HJ6HGVC4'
-    assert planner['amazonUrl'] == 'https://amzn.eu/d/09mIs6KH'
+    assert planner['amazonUrl'] == 'https://www.amazon.co.uk/dp/B0HJ6HGVC4'
     assert all(urlsplit(b['amazonUrl']).scheme == 'https' and urlsplit(b['amazonUrl']).hostname in ('www.amazon.co.uk', 'amzn.eu') for b in books if b.get('amazonUrl'))
     all_pages = list(ROOT.rglob('index.html'))
     category_count = len({b['category'] for b in books})
