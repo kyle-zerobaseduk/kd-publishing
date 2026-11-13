@@ -100,6 +100,9 @@ def preview(book, pre, page):
     image_path = preview_path(book, page)
     width, height = webp_size(ROOT / image_path)
     name = e(short_title(book))
+    if book.get('previewLabel') == 'sample':
+        # Sample order only, for previews whose interior page numbers are unverified.
+        return f'''<button class="preview" type="button" data-preview="{pre}{image_path}" data-page="{page}" aria-label="Enlarge interior sample {page} of {name}"><img src="{pre}{image_path}" alt="Sample interior page {page} from {name}" width="{width}" height="{height}" loading="lazy"><span>Sample {page}<span class="preview-action">Enlarge <span aria-hidden="true">↗</span></span></span></button>'''
     return f'''<button class="preview" type="button" data-preview="{pre}{image_path}" data-page="{page}" aria-label="Enlarge interior sample page {page} of {name}"><img src="{pre}{image_path}" alt="Actual interior page {page} from {name}" width="{width}" height="{height}" loading="lazy"><span>Page {page}<span class="preview-action">Enlarge <span aria-hidden="true">↗</span></span></span></button>'''
 
 
