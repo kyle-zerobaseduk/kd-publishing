@@ -16,10 +16,13 @@ function element() {
     querySelectorAll() { return []; },
   };
 }
-function run({ choice, id = 'G-TEST123', failEvent = false, query = '?utm_source=pinterest&utm_campaign=launch', referrer = 'https://example.org/', initialCampaign, book = { id: 'first-time-football-coach', title: 'Football Coach', category: 'guides', asin: 'B0HJDH6831' }, linkHref = 'https://www.amazon.co.uk/dp/B0HJDH6831' } = {}) {
+function run({ choice, id = 'G-TEST123', failEvent = false, query = '?utm_source=pinterest&utm_campaign=launch', referrer = 'https://example.org/', initialCampaign, book = { id: 'first-time-football-coach', title: 'Football Coach', category: 'guides', asin: 'B0HJDH6831' }, linkHref = 'https://www.amazon.co.uk/dp/B0HJDH6831', amazonDataset = {}, downloadDataset = null, downloadHref = '' } = {}) {
   const menu = element(), nav = element(), submenu = element(), banner = element(), amazon = element(), reset = element(), dialog = element(), preview = element();
   const reject = element(), accept = element();
   amazon.href = linkHref;
+  Object.assign(amazon.dataset, amazonDataset);
+  const download = element();
+  if (downloadDataset) { Object.assign(download.dataset, downloadDataset); download.href = downloadHref; }
   reject.dataset.consent = 'reject'; accept.dataset.consent = 'accept';
   preview.dataset.preview = '../../assets/previews/first-time-football-coach-16.webp';
   preview.dataset.page = '16';
@@ -40,7 +43,7 @@ function run({ choice, id = 'G-TEST123', failEvent = false, query = '?utm_source
     createElement() { return {}; },
     getElementById(key) { return key === 'site-config' ? { textContent: JSON.stringify({ ga4: id, book }) } : key === 'cookie-notice' ? banner : key === 'reset-consent' ? reset : key === 'primary-nav' ? nav : null; },
     querySelector(key) { return ({ '.menu-toggle': menu, '#primary-nav': element(), '.submenu-toggle': submenu, '.preview-dialog': dialog })[key] || null; },
-    querySelectorAll(key) { return key === '.amazon-link' ? [amazon] : key === '[data-preview]' ? [preview] : []; },
+    querySelectorAll(key) { return key === '.amazon-link' ? [amazon] : key === '[data-preview]' ? [preview] : key === '[data-free-page-download]' && downloadDataset ? [download] : []; },
   };
   const location = { search: query, href: 'https://example.test/books/first-time-football-coach/' + query, reload() { location.reloaded = true; } };
   const context = {
@@ -50,7 +53,7 @@ function run({ choice, id = 'G-TEST123', failEvent = false, query = '?utm_source
     URLSearchParams, Date, window: { dataLayer: { push(args) { if (failEvent && args[0] === 'event') throw Error('analytics unavailable'); events.push(args); } } },
   };
   vm.runInNewContext(source, context);
-  return { banner, accept, reject, amazon, menu, submenu, preview, dialog, reset, scripts, stored, session, events, cookies, location };
+  return { download, banner, accept, reject, amazon, menu, submenu, preview, dialog, reset, scripts, stored, session, events, cookies, location };
 }
 
 let state = run({});
@@ -149,4 +152,36 @@ for (const book of catalogue) {
   assert.equal(outbound.category, book.category);
   assert.equal(outbound.destination_url, destination);
 }
-console.log(`PASS: pre-consent privacy, opt-in/rejection/withdrawal, navigation, all ${catalogue.length} book funnels, campaign/referrer, analytics failure, unconfigured state`);
+// Free printable colouring pages: several books per page, so each button carries its book.
+const freeHtml = fs.readFileSync('free-colouring-pages/index.html', 'utf8');
+const freeConfig = JSON.parse(freeHtml.match(/id="site-config">([^<]+)<\/script>/)[1]);
+assert.equal(freeConfig.book, null);
+const attrs = tag => Object.fromEntries([...tag.matchAll(/([\w-]+)="([^"]*)"/g)].map(m => [m[1], m[2].replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')]));
+const freeItems = JSON.parse(fs.readFileSync('content/free-colouring-pages.json', 'utf8')).items;
+const amazonTags = [...freeHtml.matchAll(/<a class="button amazon-link"[^>]*>/g)].map(m => attrs(m[0]));
+const downloadTags = [...freeHtml.matchAll(/<a [^>]*data-free-page-download[^>]*>/g)].map(m => attrs(m[0]));
+assert.equal(amazonTags.length, freeItems.length);
+assert.equal(downloadTags.length, freeItems.length);
+freeItems.forEach((item, i) => {
+  const book = catalogue.find(b => b.id === item.bookId);
+  const destination = book.amazonUrl || `https://www.amazon.co.uk/dp/${book.asin}`;
+  const amazonTag = amazonTags[i], downloadTag = downloadTags[i];
+  assert.equal(amazonTag.href, destination);
+  assert.deepEqual([amazonTag.target, amazonTag.rel, amazonTag['data-book-id'], amazonTag['data-asin']], ['_blank', 'noopener noreferrer', book.id, book.asin]);
+  assert.equal(downloadTag.href, '../' + item.pdf);
+  const options = { id: freeConfig.ga4, book: freeConfig.book, linkHref: destination,
+    amazonDataset: { bookId: amazonTag['data-book-id'], asin: amazonTag['data-asin'], bookTitle: amazonTag['data-book-title'], category: amazonTag['data-category'], placement: amazonTag['data-placement'] },
+    downloadDataset: { freePageDownload: downloadTag['data-free-page-download'], asin: downloadTag['data-asin'], assetId: downloadTag['data-asset-id'] },
+    downloadHref: 'https://example.test/' + item.pdf };
+  state = run(options);
+  state.download.handlers.click(); state.amazon.handlers.click();
+  assert.equal(state.events.length, 0, 'no free-page events before consent');
+  state = run({ ...options, choice: 'yes' });
+  state.download.handlers.click(); state.amazon.handlers.click();
+  assert.equal(state.events.filter(a => a[1] === 'book_page_view').length, 0);
+  const free = state.events.find(a => a[1] === 'free_page_download')[2];
+  assert.deepEqual([free.book_id, free.asin, free.asset_id, free.destination_url], [book.id, book.asin, item.pdf.split('/').pop(), 'https://example.test/' + item.pdf]);
+  const outbound = state.events.find(a => a[1] === 'amazon_click')[2];
+  assert.deepEqual([outbound.book_id, outbound.asin, outbound.book_title, outbound.category, outbound.placement, outbound.destination_url], [book.id, book.asin, book.shortTitle || book.title, book.category, 'free_colouring_page', destination]);
+});
+console.log(`PASS: pre-consent privacy, opt-in/rejection/withdrawal, navigation, all ${catalogue.length} book funnels, ${freeItems.length} free colouring page downloads, campaign/referrer, analytics failure, unconfigured state`);

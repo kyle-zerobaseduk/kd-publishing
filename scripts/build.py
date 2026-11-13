@@ -205,6 +205,7 @@ def products():
         related_section = f'''<section class="section container"><div class="section-heading"><div><span class="eyebrow">Keep exploring</span><h2>More from this shelf</h2></div><a class="text-link" href="{pre}categories/{b['category']}/">View category <span aria-hidden="true">↗</span></a></div>{cards(related,pre)}</section>''' if related else ''
         main=f'''<section class="container product"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{pre}">Home</a> / <a href="{pre}categories/{b['category']}/">{e(CATS[b['category']][0])}</a> / <span>{e(name)}</span></nav><div class="product-grid"><div class="product-cover">{cover(b,pre,'eager')}</div><div class="product-info"><span class="eyebrow">{e(CATS[b['category']][0])} {'· In review' if b['status']!='live' else ''}</span><h1>{e(b.get('pageHeading', b['title']))}</h1>{subtitle}<p class="lead">{e(b.get('productDescription', b['description']))}</p><div class="purchase" id="purchase"><div class="product-actions">{purchase}<a class="button button-secondary" href="#inside">Look inside <span aria-hidden="true">↓</span></a></div>{purchase_note}</div><div class="product-details">{details}</div>{specs}</div></div></section><section class="section section-tint" id="inside"><div class="container"><div class="section-heading"><div><span class="eyebrow">Actual book pages</span><h2>Look inside</h2></div><p>Reduced-size samples from the finished interior. Tap a page for a closer look.</p></div><div class="preview-grid">{samples}</div>{after_preview}</div></section>{reader_reviews.render(b,pre)}{related_section}<dialog class="preview-dialog" aria-label="Enlarged interior preview"><button type="button" class="dialog-close" aria-label="Close preview">Close ×</button><img alt="Enlarged book interior sample"><p></p></dialog>'''
         main += book_resources(b["id"], pre)
+        main += free_page_link(b, pre)
         shell(f'books/{b["id"]}/index.html', b.get('seoTitle', full_title(b)), b.get('metaDescription', b['description']+' See actual interior pages and book information.'), main, image, b)
 
 
@@ -224,8 +225,53 @@ def simple():
     from build_resources import build_resources
     resource_paths = build_resources()
     if ORIGIN:
-        paths=['index.html','books/index.html','latest/index.html','about/index.html','contact/index.html','privacy/index.html']+[f'categories/{k}/index.html' for k in CATS]+[f'books/{b["id"]}/index.html' for b in BOOKS]+resource_paths
+        paths=['index.html','books/index.html','latest/index.html','about/index.html','contact/index.html','privacy/index.html']+[f'categories/{k}/index.html' for k in CATS]+[f'books/{b["id"]}/index.html' for b in BOOKS]+[FREE_PAGES_PATH]+resource_paths
         (ROOT/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+''.join(f'<url><loc>{e(url(p.replace("index.html","")))}</loc></url>' for p in paths)+'</urlset>',encoding='utf-8')
+
+
+FREE_PAGES_PATH = 'free-colouring-pages/index.html'
+
+
+@cache
+def free_pages():
+    """Owner-reviewed free printables: one real interior page per book."""
+    return json.loads((ROOT / 'content/free-colouring-pages.json').read_text())['items']
+
+
+def free_page_link(book, pre):
+    """Small book-page pointer to its free printable; no other book is affected."""
+    if not any(item['bookId'] == book['id'] for item in free_pages()):
+        return ''
+    return f'<section class="container section book-resources"><h2>Free colouring page</h2><p><a class="text-link" href="{pre}free-colouring-pages/">Download a free printable page from this book <span aria-hidden="true">↗</span></a></p></section>'
+
+
+def free_colouring():
+    pre = '../'
+    books = {b['id']: b for b in BOOKS}
+    main = titleblock('Free printables', 'Free printable colouring pages', 'Download a real page from one of our colouring books, print it at home and start colouring.')
+    for item in free_pages():
+        b = books[item['bookId']]
+        name = short_title(b)
+        label = CATS[b['category']][0]
+        width, height = webp_size(ROOT / item['thumbnail'])
+        size_kb = max(1, round((ROOT / item['pdf']).stat().st_size / 1024))
+        size = f'{size_kb / 1024:.1f} MB' if size_kb >= 1024 else f'{size_kb} KB'
+        amazon_url = b.get('amazonUrl') or f'https://www.amazon.co.uk/dp/{b["asin"]}'
+        anchor_id = f'free-{b["id"]}'
+        main += (f'<section class="container section" aria-labelledby="{anchor_id}"><div class="product-grid"><div class="product-cover">'
+                 f'<img src="{pre}{item["thumbnail"]}" alt="{e(item["alt"])}" width="{width}" height="{height}" loading="eager"></div>'
+                 f'<div class="product-info"><span class="eyebrow">{e(label)} · {e(name)}</span><h2 id="{anchor_id}">{e(item["heading"])}</h2>'
+                 f'<p class="lead">{e(item["summary"])}</p><p>Page {item["interiorPage"]} of <a class="text-link" href="{pre}books/{b["id"]}/">{e(name)}</a>, taken from the finished book interior.</p>'
+                 f'<div class="product-actions"><a class="button button-dark" href="{pre}{item["pdf"]}" download data-free-page-download="{b["id"]}" data-asin="{b["asin"]}" data-asset-id="{e(item["pdf"].split("/")[-1])}">Download free page (PDF) <span aria-hidden="true">↓</span></a>'
+                 f'<a class="button amazon-link" data-placement="free_colouring_page" href="{e(amazon_url)}" target="_blank" rel="noopener noreferrer" data-book-id="{b["id"]}" data-asin="{b["asin"]}" data-book-title="{e(name)}" data-category="{b["category"]}">Buy on Amazon UK <span aria-hidden="true">↗</span></a></div>'
+                 f'<small>PDF · {size} · {e(item["printNotes"])}. On A4 paper, choose “Fit to page” when printing.</small>'
+                 f'<p><a class="text-link" href="{pre}books/{b["id"]}/">See more pages from {e(name)} <span aria-hidden="true">↗</span></a></p></div></div></section>')
+    main += ('<section class="container prose section"><h2>Using these pages</h2><p>Free for personal use. Please don’t resell. Print as many copies as you like for yourself, your family or your classroom; '
+             'please share a link to this page rather than uploading the files elsewhere.</p><p>© K.D.Publishing. Each page comes from the finished paperback interior; Amazon handles book orders, prices and availability.</p></section>')
+    first = free_pages()[0]
+    shell(FREE_PAGES_PATH, 'Free printable colouring pages',
+          'Download free printable colouring pages from K.D.Publishing books: a dragon over a fantasy castle and a T. rex for kids, as print-ready PDFs.',
+          main, first['thumbnail'], resource={'id': 'free-colouring-pages', 'cluster': 'colouring'})
 
 
 if __name__ == '__main__':
@@ -234,5 +280,5 @@ if __name__ == '__main__':
     assert all(len(short_title(b)) <= 100 for b in BOOKS)
     assert all(bool(b['asin']) == (b['status']=='live') for b in BOOKS)
     assert len({b['asin'] for b in BOOKS if b['asin']})==sum(b['status']=='live' for b in BOOKS)
-    home();catalogue();products();simple()
+    home();catalogue();products();free_colouring();simple()
     print(f'Built {len(BOOKS)} product pages')

@@ -60,7 +60,10 @@ def check():
     assert all(urlsplit(b['amazonUrl']).scheme == 'https' and urlsplit(b['amazonUrl']).hostname in ('www.amazon.co.uk', 'amzn.eu') for b in books if b.get('amazonUrl'))
     all_pages = list(ROOT.rglob('index.html'))
     category_count = len({b['category'] for b in books})
-    assert len(all_pages) == len(books) + category_count + 6 + 4 + len(selected()), len(all_pages)
+    free_items = json.loads((ROOT / 'content/free-colouring-pages.json').read_text())['items']
+    # One declared free printable page lists every free colouring download.
+    assert len(all_pages) == len(books) + category_count + 6 + 4 + len(selected()) + 1, len(all_pages)
+    assert {item['bookId'] for item in free_items} <= {b['id'] for b in books if b['status'] == 'live'}
     for page in all_pages:
         markup = page.read_text()
         parsed = Inspect(); parsed.feed(markup)
@@ -95,9 +98,19 @@ def check():
                     assert set(button.get('rel', '').split()) >= {'noopener', 'noreferrer'}
             assert len([x for x in parsed.images if '/previews/' in x.get('src','') and x['alt'] != 'Preview button']) == len(b['previewPages'])
     allowed_pdfs = {ROOT / d['path'] for r in __import__('resource_content').ALL_RESOURCES for d in r['downloads']}
-    assert set(ROOT.rglob('*.pdf')) <= allowed_pdfs and not list(ROOT.rglob('*.zip'))
+    # Free colouring pages: one owner-selected print-quality interior page each, never a whole interior.
+    free_pdfs = {ROOT / item['pdf'] for item in free_items}
+    assert set(ROOT.rglob('*.pdf')) <= allowed_pdfs | free_pdfs and not list(ROOT.rglob('*.zip'))
+    free_markup = (ROOT / 'free-colouring-pages/index.html').read_text()
+    for item in free_items:
+        assert f'data-free-page-download="{item["bookId"]}"' in free_markup, item['bookId']
     for asset in (ROOT/'assets').rglob('*'):
         if not asset.is_file(): continue
+        if asset in free_pdfs:
+            assert asset.stat().st_size < 2_000_000, asset
+            from pypdf import PdfReader
+            assert len(PdfReader(asset).pages) == 1, asset
+            continue
         if asset in allowed_pdfs:
             assert asset.stat().st_size < 100_000
             continue
