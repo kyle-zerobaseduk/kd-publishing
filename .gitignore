@@ -6,3 +6,5 @@ __pycache__/
 
 # Limited original Phase 2B free printables, never book interiors.
 !assets/resources/*.pdf
+# Owner-requested free colouring pages: one declared interior page per book (see content/free-colouring-pages.json).
+!assets/free-colouring/*.pdf

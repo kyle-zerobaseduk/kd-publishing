@@ -89,11 +89,13 @@
   });
 
   document.querySelectorAll('.amazon-link').forEach(link => link.addEventListener('click', () => {
+    // Pages listing several books (free printables) carry the book on the button itself.
+    const book = config.book || { id: link.dataset.bookId, title: link.dataset.bookTitle || '', category: link.dataset.category || '', asin: link.dataset.asin };
     event('amazon_click', {
-      book_id: config.book.id,
-      book_title: config.book.title,
-      category: config.book.category,
-      asin: config.book.asin,
+      book_id: book.id,
+      book_title: book.title,
+      category: book.category,
+      asin: book.asin,
       destination_url: link.href,
       placement: link.dataset.placement || 'product_top'
     });
@@ -105,6 +107,9 @@
   });
   document.querySelectorAll('[data-resource-download]').forEach(link => link.addEventListener('click', () => {
     event('printable_download', { resource_id: link.dataset.resourceDownload, asset_id: link.dataset.assetId, destination_url: link.href });
+  }));
+  document.querySelectorAll('[data-free-page-download]').forEach(link => link.addEventListener('click', () => {
+    event('free_page_download', { book_id: link.dataset.freePageDownload, asin: link.dataset.asin, asset_id: link.dataset.assetId, destination_url: link.href });
   }));
   document.querySelectorAll('[data-related-book]').forEach(link => link.addEventListener('click', () => {
     event('related_book_click', { resource_id: link.dataset.resourceId, book_id: link.dataset.relatedBook });

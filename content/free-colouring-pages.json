@@ -1,0 +1,27 @@
+{
+  "note": "One real interior page per book, extracted unchanged from the finished KDP interior PDF with scripts/generate_free_colouring_pages.py. Source PDFs stay private.",
+  "items": [
+    {
+      "bookId": "realms-of-the-dragonspire",
+      "interiorPage": 51,
+      "sourcePdf": "Realms_of_the_Dragonspire_Interior_Fixed_Download.pdf",
+      "pdf": "assets/free-colouring/realms-of-the-dragonspire-page-51.pdf",
+      "thumbnail": "assets/free-colouring/realms-of-the-dragonspire-page-51.webp",
+      "heading": "A dragon over the castle",
+      "summary": "A winged dragon soars above a many-towered castle, forest and winding river. Fine detail for adult colourists.",
+      "alt": "Colouring page from Realms of the Dragonspire: a winged dragon flying over a fantasy castle above a forest and river",
+      "printNotes": "Single-sided US Letter page (8.5 × 11 in) with high-resolution (about 300 ppi) line art"
+    },
+    {
+      "bookId": "dinosaur-colouring-and-discovery",
+      "interiorPage": 59,
+      "sourcePdf": "KD_Dinosaur_Colouring_Discovery_KDP_Interior.pdf",
+      "pdf": "assets/free-colouring/dinosaur-colouring-and-discovery-page-59.pdf",
+      "thumbnail": "assets/free-colouring/dinosaur-colouring-and-discovery-page-59.webp",
+      "heading": "Tyrannosaurus rex",
+      "summary": "A friendly T. rex among palm trees and ferns, with two short facts to share. Made for children ages 4–7.",
+      "alt": "Colouring page from Dinosaur Colouring & Discovery: a Tyrannosaurus rex among palm trees and ferns, with two short facts",
+      "printNotes": "Single-sided US Letter page (8.5 × 11 in) with vector line art"
+    }
+  ]
+}

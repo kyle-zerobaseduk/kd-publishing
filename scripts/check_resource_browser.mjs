@@ -11,7 +11,7 @@ fs.mkdirSync(out,{recursive:true});
 const pkg=JSON.parse(fs.readFileSync(path.join(modules,'puppeteer-core/package.json')));
 const {default:puppeteer}=await import(pathToFileURL(path.join(modules,'puppeteer-core',pkg.main)));
 const records=fs.readdirSync('content/resources').filter(n=>n.endsWith('.json')&&!n.endsWith('-grid.json')).map(n=>JSON.parse(fs.readFileSync('content/resources/'+n))).filter(r=>fs.existsSync(`resources/${r.cluster}/${r.slug}/index.html`));
-const targets=['','books/british-nostalgia/','resources/','resources/football/','resources/puzzles/','resources/workplace-humour/',...records.map(r=>`resources/${r.cluster}/${r.slug}/`)];
+const targets=['','books/british-nostalgia/','free-colouring-pages/','resources/','resources/football/','resources/puzzles/','resources/workplace-humour/',...records.map(r=>`resources/${r.cluster}/${r.slug}/`)];
 const types={'.html':'text/html','.css':'text/css','.js':'application/javascript','.webp':'image/webp','.pdf':'application/pdf'};
 const server=http.createServer((req,res)=>{let file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));if(!file.startsWith(root+'/'))file=path.join(root,'index.html');if(fs.existsSync(file)&&fs.statSync(file).isDirectory())file=path.join(file,'index.html');if(!fs.existsSync(file)){res.writeHead(404).end();return;}res.writeHead(200,{'Content-Type':types[path.extname(file)]||'text/plain'});fs.createReadStream(file).pipe(res);});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));

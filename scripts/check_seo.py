@@ -156,6 +156,7 @@ def main():
             if args.growth_release:
                 continue  # Dedicated semantic preservation below replaces exact template bytes.
             if path.is_relative_to(ROOT/'resources'): continue
+            if path == ROOT/'free-colouring-pages/index.html': continue  # Declared new page; validated by check_site and test_tracking.
             relative = path.relative_to(ROOT).as_posix()
             if additions:
                 new_pages = {f'books/{b["id"]}/index.html' for b in additions}
