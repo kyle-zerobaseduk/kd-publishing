@@ -11,4 +11,5 @@ def cover_path(book):
 
 
 def preview_path(book, page):
-    return f'assets/previews/{asset_stem(book)}-{page}.webp'
+    # Optional previewStem keeps already-published preview filenames stable.
+    return f'assets/previews/{book.get("previewStem") or asset_stem(book)}-{page}.webp'
